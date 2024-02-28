@@ -5,7 +5,13 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
-import { IconButton, InputAdornment, MenuItem, Select } from "@mui/material";
+import {
+  Grid,
+  IconButton,
+  InputAdornment,
+  MenuItem,
+  Select,
+} from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import PropTypes from "prop-types";
 import { SERVER_URL } from "@/config";
@@ -244,12 +250,41 @@ const CreateUserDialog = ({ open, onClose, onSave }) => {
           </DialogContent>
 
           <DialogActions>
-            <Button onClick={handleCloseResponse} color="primary">
-              Close
-            </Button>
-            <Button onClick={handleSave} color="primary">
-              Create
-            </Button>
+            <Grid
+              container
+              spacing={2}
+              justify="center"
+              justifyContent="center"
+            >
+              <Grid item md={3}>
+                <Button
+                  onClick={handleCloseResponse}
+                  color="primary"
+                  style={{
+                    backgroundColor: "red",
+                    borderRadius: "20px",
+                    width: "100%",
+                    color: "white",
+                  }}
+                >
+                  Close
+                </Button>
+              </Grid>
+              <Grid item md={3}>
+                <Button
+                  onClick={handleSave}
+                  color="primary"
+                  style={{
+                    backgroundColor: "#8bc34a",
+                    borderRadius: "20px",
+                    width: "100%",
+                    color: "white",
+                  }}
+                >
+                  Create
+                </Button>
+              </Grid>
+            </Grid>
           </DialogActions>
         </Dialog>
       )}
@@ -273,8 +308,18 @@ const CreateUserDialog = ({ open, onClose, onSave }) => {
               <div>{response.message}</div>
             </div>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseResponse} color="primary">
+          <DialogActions style={{ justifyContent: 'center' }}>
+            <Button
+              onClick={handleCloseResponse}
+              color="secondary"
+              style={{
+                backgroundColor: "#8bc34a",
+                borderRadius: "20px",
+                width: "50%",
+                color: "white",
+               
+              }}
+            >
               Close
             </Button>
           </DialogActions>

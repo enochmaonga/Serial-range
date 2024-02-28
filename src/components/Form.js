@@ -38,10 +38,11 @@ const Form = () => {
       phoneNumber: Yup.string().required("Phone Number is required"),
     }),
   });
+
   const handleDialogOpen = () => {
     setDialogTitle("Success!");
     setDialogContent(
-      "You have successully submitted your info",
+      "You have successully submitted your info"
       // serverResponse
     );
     setDialogOpen(true);
@@ -82,8 +83,8 @@ const Form = () => {
     setLoading(true);
     try {
       // if (formik.isValid) {
-        await formik.validateForm();
-        if (Object.keys(formik.errors).length === 0) {
+      await formik.validateForm();
+      if (Object.keys(formik.errors).length === 0) {
         const allFormValues = { ...formik.values };
         await handleNewEntry(allFormValues);
       } else {
@@ -308,25 +309,23 @@ const Form = () => {
           />
           <Typography variant="h6">{dialogTitle}</Typography>
           <Typography>{dialogContent}</Typography>
-          <Grid >
+          <Grid>
             {/* <Grid item md={6}> */}
             <Button
-            onClick={handleDialogClose}
-            variant="contained"
-            color="primary"
-            style={{
-              marginTop: "15px",
-              borderRadius: "30px",
-              backgroundColor: "#357a38",
-              width: '100%'
-            }} // Adjust the margin as needed
-          >
-            Close
-          </Button>
+              onClick={handleDialogClose}
+              variant="contained"
+              color="primary"
+              style={{
+                marginTop: "15px",
+                borderRadius: "30px",
+                backgroundColor: "#357a38",
+                width: "100%",
+              }} // Adjust the margin as needed
+            >
+              Close
+            </Button>
             {/* </Grid> */}
           </Grid>
-         
-          
         </DialogContent>
       </Dialog>
     </Box>

@@ -11,11 +11,14 @@ import {
   Box,
   Typography,
   Grid,
+  ListItemText,
 } from "@mui/material";
 import { v4 as uuidv4 } from "uuid";
 import { SERVER_URL } from "@/config";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import Link from "next/link";
+import Sidebar from "../Dashboard/SideBar";
 
 const BoldTableCell = styled(TableCell)({
   fontWeight: "bold",
@@ -24,14 +27,16 @@ const BoldTableCell = styled(TableCell)({
 
 const DataTable = () => {
   const [data, setData] = useState([]);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const router = useRouter();
+
+  // const [isAdmin, setIsAdmin] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         console.log("Fetching data from the server...");
-        const authToken = localStorage.getItem('token');
+        const authToken = localStorage.getItem("token");
         if (!authToken) {
           throw new Error("No authentication token found.");
         }
@@ -39,15 +44,14 @@ const DataTable = () => {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${authToken}`
-           
+            Authorization: `Bearer ${authToken}`,
           },
         });
         console.log("Server response status:", response.status);
-     
 
         if (response.status === 200) {
           const responseData = await response.json();
+          // setIsAdmin(role === 'admin' || "user");
           console.log("Response data from the server:", responseData);
 
           if (Array.isArray(responseData)) {
@@ -69,26 +73,44 @@ const DataTable = () => {
               "Data from the server is not an array:",
               responseData.body
             );
-            setError('Data from the server is not in the expected format');
+            setError("Data from the server is not in the expected format");
           }
         } else if (response.status === 401) {
           // Unauthorized access, redirect to login
-          router.push('/login');
+          router.push("/login");
         } else {
           console.error("Server error:", response.status);
-          setError('Server error. Please tryagain later');
+          setError("Server error. Please tryagain later");
         }
       } catch (error) {
         console.error("Error:", error);
-        setError('An erro occurred while fetching data');
+        setError("An erro occurred while fetching data");
       }
     };
-
     fetchData();
   }, []);
 
   return (
     <>
+      <Box
+        style={{
+          backgroundColor: "#8bc34a",
+          width: "200px",
+          height: "100%",
+          position: "fixed",
+          left: 0,
+          top: 0,
+        }}
+      >
+        {/* Admin content goes here */}
+        <Link href="/dashboard" passHref style={{textDecoration: 'none'}}>
+        <Typography variant="h6" style={{ color: "white", padding: "16px" }}>
+          Admin Panel
+        </Typography>
+        </Link>
+        <Sidebar />
+      </Box>
+
       <Grid
         sx={{
           textAlign: "center", // Center the form horizontally
@@ -146,9 +168,9 @@ const DataTable = () => {
         component={Paper}
         sx={{
           textAlign: "center",
-          marginLeft: "auto",
-          marginRight: "auto",
-          maxWidth: "90%",
+          marginLeft: "240px",
+          marginRight: "50px",
+          maxWidth: "85%",
         }}
       >
         <Table>

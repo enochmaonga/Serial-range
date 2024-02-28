@@ -30,32 +30,83 @@ const Sidebar = () => {
           height: "100%",
           display: "flex",
           flexDirection: "column",
+          // marginRight: 
         }}
       >
-        <Card style={{ margin: "20px", height: "60px" }}>
-          Here is where you come
-        </Card>
-        <List>
-          <ListItem button>
-            <Link href="/users" passHref style={{ textDecoration: 'none' }}>
-            <Typography component="div" >
-              <ListItemText primary="User Management" />
-            </Typography>
+        <List style={{ marginTop: "100px" }}>
+          <ListItem>
+            <Link href="/dashboard" passHref style={{ textDecoration: "none" }}>
+              <Typography
+                variant="h6"
+                style={{
+                  color: "white",
+                  padding: "16px",
+                  backgroundColor: "#7cb342",
+                  borderRadius: "15px",
+                }}
+              >
+                Admin Panel
+              </Typography>
             </Link>
           </ListItem>
-          <ListItem button>
-            <Link href="/" passHref style={{ textDecoration: 'none' }}>
-              <ListItemText primary="Home" />
+          <ListItem>
+            <Link href="/users" passHref style={{ textDecoration: "none" }}>
+              <Typography
+                variant="h6"
+                style={{
+                  color: "white",
+                  padding: "16px",
+                  backgroundColor: "#7cb342",
+                  borderRadius: "15px",
+                }}
+              >
+                User Management
+              </Typography>
             </Link>
           </ListItem>
-          <ListItem button>
-            <Link href="view-data" passHref style={{ textDecoration: 'none' }}>
-              <ListItemText primary="View Data" />
+          <ListItem>
+            <Link href="/" passHref style={{ textDecoration: "none" }}>
+              <Typography
+                variant="h6"
+                style={{
+                  color: "white",
+                  padding: "16px",
+                  backgroundColor: "#7cb342",
+                  borderRadius: "15px",
+                }}
+              >
+                Home
+              </Typography>
             </Link>
           </ListItem>
-          <ListItem button>
-            <Link href="view-data" passHref style={{ textDecoration: 'none' }}>
-              <ListItemText primary="Contact" />
+          <ListItem>
+            <Link href="/view-data" passHref style={{ textDecoration: "none" }}>
+              <Typography
+                variant="h6"
+                style={{
+                  color: "white",
+                  padding: "16px",
+                  backgroundColor: "#7cb342",
+                  borderRadius: "15px",
+                }}
+              >
+                View Data
+              </Typography>
+            </Link>
+          </ListItem>
+          <ListItem>
+            <Link href="/login" passHref style={{ textDecoration: "none" }}>
+              <Typography
+                variant="h6"
+                style={{
+                  color: "white",
+                  padding: "16px",
+                  backgroundColor: "#7cb342",
+                  borderRadius: "15px",
+                }}
+              >
+                Feedback
+              </Typography>
             </Link>
           </ListItem>
         </List>
