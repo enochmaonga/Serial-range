@@ -15,6 +15,7 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import { SERVER_URL } from "@/config";
 import Image from "next/image";
+import { useRouter } from "next/router";
 
 const BoldTableCell = styled(TableCell)({
   fontWeight: "bold",
@@ -23,26 +24,35 @@ const BoldTableCell = styled(TableCell)({
 
 const DataTable = () => {
   const [data, setData] = useState([]);
+  const [error, setError] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         console.log("Fetching data from the server...");
-        const response = await fetch(`${SERVER_URL}/formcontent`, {
+        const authToken = localStorage.getItem('token');
+        if (!authToken) {
+          throw new Error("No authentication token found.");
+        }
+        const response = await fetch(`${SERVER_URL}/content`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${authToken}`
+           
           },
         });
         console.log("Server response status:", response.status);
+     
 
         if (response.status === 200) {
           const responseData = await response.json();
           console.log("Response data from the server:", responseData);
 
-          if (Array.isArray(responseData.body)) {
-            if (responseData.body.length > 0) {
-              const fetchedItems = responseData.body.map((item) => ({
+          if (Array.isArray(responseData)) {
+            if (responseData.length > 0) {
+              const fetchedItems = responseData.map((item) => ({
                 id: uuidv4(),
                 name: item.name,
                 homeChurch: item.homeChurch,
@@ -59,12 +69,18 @@ const DataTable = () => {
               "Data from the server is not an array:",
               responseData.body
             );
+            setError('Data from the server is not in the expected format');
           }
+        } else if (response.status === 401) {
+          // Unauthorized access, redirect to login
+          router.push('/login');
         } else {
           console.error("Server error:", response.status);
+          setError('Server error. Please tryagain later');
         }
       } catch (error) {
         console.error("Error:", error);
+        setError('An erro occurred while fetching data');
       }
     };
 

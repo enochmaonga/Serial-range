@@ -42,7 +42,7 @@ const Form = () => {
     setDialogTitle("Success!");
     setDialogContent(
       "You have successully submitted your info",
-      serverResponse
+      // serverResponse
     );
     setDialogOpen(true);
   };
@@ -81,9 +81,14 @@ const Form = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const allFormValues = { ...formik.values };
-      await handleNewEntry(allFormValues);
-      // const response = handleNewEntry(allFormValues);
+      // if (formik.isValid) {
+        await formik.validateForm();
+        if (Object.keys(formik.errors).length === 0) {
+        const allFormValues = { ...formik.values };
+        await handleNewEntry(allFormValues);
+      } else {
+        console.log("form is notvalid, please ill all fields");
+      }
     } catch (error) {
       console.error("error Submitting form", error);
     } finally {
@@ -93,7 +98,7 @@ const Form = () => {
   };
 
   const handleViewData = () => {
-    router.push("/view-data");
+    router.push("/login");
   };
 
   const handleCancel = () => {
@@ -177,6 +182,7 @@ const Form = () => {
                 id="standard-textarea"
                 label="Name"
                 name="name"
+                required
                 variant="standard"
                 value={formik.values.name}
                 onChange={formik.handleChange}
@@ -193,6 +199,7 @@ const Form = () => {
                 id="standard-textarea"
                 name="department"
                 variant="standard"
+                required
                 value={formik.values.department}
                 onChange={formik.handleChange}
                 error={
@@ -212,6 +219,7 @@ const Form = () => {
                 id="standard-textarea"
                 name="homeChurch"
                 variant="standard"
+                required
                 value={formik.values.homeChurch}
                 onChange={formik.handleChange}
                 error={
@@ -231,6 +239,7 @@ const Form = () => {
                 id="standard-textarea"
                 name="phoneNumber"
                 variant="standard"
+                required
                 value={formik.values.phoneNumber}
                 onChange={formik.handleChange}
                 error={

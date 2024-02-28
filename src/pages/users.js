@@ -20,7 +20,6 @@ import {
 import { MdDelete } from "react-icons/md";
 import { CiSearch } from "react-icons/ci";
 import { SERVER_URL } from "@/config";
-// import DeleteUserDialog from "./DeleteUser";
 import UserShimmer from "../components/Dashboard/UserShimmers";
 import CreateUserDialog from "@/components/Dashboard/CreateUserDialog";
 
@@ -45,31 +44,6 @@ function Users() {
 
   const handleCloseCreateDialog = () => {
     setCreateDialogOpen(false);
-  };
-
-  const handleRegisterUser = async (formData) => {
-    try {
-      const response = await fetch(`${SERVER_URL}/users`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (response.status === 201) {
-        // User registration was successful, you can update the UI as needed.
-        const result = await response.json();
-        console.log(result.success);
-
-        // This will log the success message from the server.
-      } else {
-        // Handle registration error, e.g., show an error message to the user.
-        console.error("User registration failed");
-      }
-    } catch (error) {
-      console.error("Error registering user:", error);
-    }
   };
 
   const handleDeleteUser = (userId) => {
@@ -192,7 +166,7 @@ function Users() {
           <CreateUserDialog
             open={isCreateDialogOpen}
             onClose={handleCloseCreateDialog}
-            onSave={handleRegisterUser}
+            // onSave={handleRegisterUser}
           />
         </Grid>
       </Grid>

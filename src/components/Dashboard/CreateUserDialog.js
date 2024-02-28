@@ -5,7 +5,6 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
-// import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { IconButton, InputAdornment, MenuItem, Select } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import PropTypes from "prop-types";
@@ -59,7 +58,6 @@ const CreateUserDialog = ({ open, onClose, onSave }) => {
       if (response.status === 201) {
         // User created successfully
         setResponse({ type: "success", message: "User created successfully" });
-        onSave();
       } else {
         // Handle server error or validation errors
         const responseData = await response.json();
@@ -87,11 +85,11 @@ const CreateUserDialog = ({ open, onClose, onSave }) => {
       validationErrors.firstName = "Name is required";
     }
     if (!formData.middleName) {
-        validationErrors.middleName = "Name is required";
-      }
-      if (!formData.lastName) {
-        validationErrors.lastName = "Name is required";
-      }
+      validationErrors.middleName = "Name is required";
+    }
+    if (!formData.lastName) {
+      validationErrors.lastName = "Name is required";
+    }
     if (!formData.username) {
       validationErrors.username = "Username is required";
     }
@@ -133,7 +131,6 @@ const CreateUserDialog = ({ open, onClose, onSave }) => {
   return (
     <>
       {mainDialogOpen && (
-        
         <Dialog
           open={open}
           onClose={handleCloseResponse}
@@ -146,7 +143,7 @@ const CreateUserDialog = ({ open, onClose, onSave }) => {
           <DialogTitle>Create User</DialogTitle>
           <DialogContent>
             <TextField
-              name="userName"
+              name="username"
               label="User Name"
               fullWidth
               value={formData.username}
@@ -185,7 +182,7 @@ const CreateUserDialog = ({ open, onClose, onSave }) => {
               error={errors.firstName}
               helperText={errors.firstName}
             />
-              <TextField
+            <TextField
               name="middleName"
               label="Middle Name"
               fullWidth
@@ -195,7 +192,7 @@ const CreateUserDialog = ({ open, onClose, onSave }) => {
               error={errors.middleName}
               helperText={errors.middleName}
             />
-              <TextField
+            <TextField
               name="lastName"
               label="Last Name"
               fullWidth
@@ -230,7 +227,7 @@ const CreateUserDialog = ({ open, onClose, onSave }) => {
             <Select
               name="userType"
               label="User Type"
-              placeholder="User Type"
+              // placeholder="User Type"
               fullWidth
               value={formData.userType}
               onChange={handleChange}
@@ -238,17 +235,6 @@ const CreateUserDialog = ({ open, onClose, onSave }) => {
               error={errors.userType}
               helperText={errors.userType}
             >
-                <Select
-              name="userType"
-              label="User Type"
-              placeholder="User Type"
-              fullWidth
-              value={formData.userType}
-              onChange={handleChange}
-              style={{ marginBottom: 6, marginTop: 6 }}
-              error={errors.userType}
-              helperText={errors.userType}
-            ></Select>
               {userTypeOptions.map((option) => (
                 <MenuItem key={option} value={option}>
                   {option}
@@ -256,7 +242,7 @@ const CreateUserDialog = ({ open, onClose, onSave }) => {
               ))}
             </Select>
           </DialogContent>
-        
+
           <DialogActions>
             <Button onClick={handleCloseResponse} color="primary">
               Close

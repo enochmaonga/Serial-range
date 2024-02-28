@@ -1,3 +1,3 @@
-const SERVER_URL = 'http://localhost:5000'; 
+const SERVER_URL = 'http://localhost:5001'; 
 
 export { SERVER_URL };

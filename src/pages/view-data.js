@@ -1,10 +1,14 @@
 import DataTable from "@/components/Data/ViewData";
+import Head from "next/head";
 
 const Home = () => {
   return (
-    <div>
+    <>
+      <Head>
+        <title> KCC | View Data</title>
+      </Head>
       <DataTable />
-    </div>
+    </>
   );
 };
 
