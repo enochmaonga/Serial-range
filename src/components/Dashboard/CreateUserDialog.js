@@ -332,7 +332,7 @@ const CreateUserDialog = ({ open, onClose, onSave }) => {
 CreateUserDialog.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
-  onSave: PropTypes.func.isRequired,
+  onSave: PropTypes.func,
 };
 
 export default CreateUserDialog;

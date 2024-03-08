@@ -2,8 +2,7 @@ import React from "react";
 import Drawer from "@mui/material/Drawer";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
-import ListItemText from "@mui/material/ListItemText";
-import { Card, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 import { makeStyles } from "@mui/styles";
 import Link from "next/link";
 
@@ -30,7 +29,7 @@ const Sidebar = () => {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          // marginRight: 
+          // marginRight:
         }}
       >
         <List style={{ marginTop: "100px" }}>
