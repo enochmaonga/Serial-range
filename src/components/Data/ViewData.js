@@ -88,7 +88,7 @@ const DataTable = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [router]);
 
   return (
     <>
