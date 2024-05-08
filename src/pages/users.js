@@ -111,7 +111,7 @@ function Users() {
 
   return (
     <Grid container justifyContent="center">
-      <Grid item xs={12} sm={12} >
+      <Grid item xs={12} sm={12} sx={{ml:32}}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
           <Sidebar />
@@ -138,7 +138,7 @@ function Users() {
               }}
             >
               <Grid container>
-                <Grid item xs={12} sm={6} md={8} xl={10} sx={{ padding: 3 }}>
+                <Grid item xs={12} sm={6} md={8} xl={8} sx={{ padding: 3 }}>
                   <TextField
                     id="search-bar"
                     className="text"
@@ -171,7 +171,8 @@ function Users() {
                 </Grid>
               </Grid>
             </Card>
-            <Card sx={{ width: "100%", mt: 3, marginLeft: "40px" }}>
+            <Grid sx={{ width: "100%", mt: 3, marginLeft: "40px" }}>
+              {/* <Card> */}
               <Table>
                 <TableHead>
                   <TableRow>
@@ -225,7 +226,8 @@ function Users() {
                   rowsPerPageOptions={[]}
                 />
               </Box>
-            </Card>
+              {/* </Card> */}
+            </Grid>
 
             {/* <DeleteUserDialog
       open={isDeleteDialogOpen}

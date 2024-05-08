@@ -3,7 +3,7 @@ import Drawer from "@mui/material/Drawer";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import { Typography } from "@mui/material";
-import { createTheme, ThemeProvider } from "@mui/material/styles"; // Import createTheme and ThemeProvider
+import { createTheme, ThemeProvider } from "@mui/material/styles"; 
 import Link from "next/link";
 
 // Define your custom theme
@@ -19,7 +19,7 @@ const theme = createTheme({
 
 const Sidebar = () => {
   return (
-    <ThemeProvider theme={theme}> {/* Wrap your component with ThemeProvider */}
+    <ThemeProvider theme={theme}> 
       <Drawer
         variant="permanent"
         anchor="left"
