@@ -25,6 +25,8 @@ const BoldTableCell = styled(TableCell)({
   backgroundColor: "#8bc34a",
 });
 
+const backendUrl = process.env.REACT_APP_BACKEND_URL;
+
 const DataTable = () => {
   const [data, setData] = useState([]);
   const [error, setError] = useState("");
@@ -40,7 +42,7 @@ const DataTable = () => {
         if (!authToken) {
           throw new Error("No authentication token found.");
         }
-        const response = await fetch(`${SERVER_URL}/content`, {
+        const response = await fetch(`${backendUrl}/content`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
