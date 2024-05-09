@@ -65,10 +65,12 @@ function Users() {
     setAnchorEl(null);
   };
 
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(`${SERVER_URL}/fetchusers`, {
+        const response = await fetch(`${backendUrl}/fetchusers`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

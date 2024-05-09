@@ -25,7 +25,7 @@ const BoldTableCell = styled(TableCell)({
   backgroundColor: "#8bc34a",
 });
 
-const backendUrl = process.env.REACT_APP_BACKEND_URL;
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 const DataTable = () => {
   const [data, setData] = useState([]);
