@@ -10,6 +10,8 @@ const Login = () => {
   const router = useRouter();
   const [token, setToken] = useState("");
 
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+
   // Check if the user is already logged in
   useEffect(() => {
     const loggedInToken = localStorage.getItem('token');
@@ -30,7 +32,7 @@ const Login = () => {
 
   const handleLogin = async () => {
     try {
-    const response = await fetch(`${SERVER_URL}/login`, {
+    const response = await fetch(`${backendUrl}/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
