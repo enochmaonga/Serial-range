@@ -24,6 +24,8 @@ const Form = () => {
   const [dialogContent, setDialogContent] = useState("");
   const router = useRouter();
 
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+
   const formik = useFormik({
     initialValues: {
       name: "",
@@ -54,7 +56,7 @@ const Form = () => {
 
   const handleNewEntry = (allFormValues) => {
     // Send a POST request to the server
-    fetch(`${SERVER_URL}/newEntry`, {
+    fetch(`${backendUrl}/newEntry`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
