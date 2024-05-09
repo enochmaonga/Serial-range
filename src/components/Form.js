@@ -99,7 +99,7 @@ const Form = () => {
   };
 
   const handleViewData = () => {
-    router.push("/view-data");
+    router.push("/login");
   };
 
   const handleCancel = () => {
