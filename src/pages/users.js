@@ -37,7 +37,7 @@ const BoldTableCell = styled(TableCell)({
 const theme = createTheme({
   palette: {
     background: {
-      default: "#8bc34a", // Set your desired background color here
+      default: "#EEEEEE", // Set your desired background color here
     },
   },
 });

@@ -96,7 +96,7 @@ const DataTable = () => {
     <>
       <Box
         style={{
-          backgroundColor: "#8bc34a",
+          backgroundColor: "#EEEEEE",
           width: "200px",
           height: "100%",
           position: "fixed",

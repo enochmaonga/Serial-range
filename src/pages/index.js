@@ -1,23 +1,37 @@
-import { Box, Button, Container, Grid, Stack, Typography, styled, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Button, Container, CssBaseline, Grid, Stack, ThemeProvider, Typography, createTheme, styled, useMediaQuery, useTheme } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import NextLink from "next/link";
 import PageSection from "@/components/PageSection";
 import PageContainer from "@/components/PageContainer";
 import Image from "next/image";
-// import PageSection from "./PageSection";
-// import PageContainer from "./PageContainer";
+
+
+const theme = createTheme({
+  palette: {
+    background: {
+      default: "#EEEEEE", // Set your desired background color here
+    },
+  },
+});
 
 
 const StyledTypographyHeading = styled(Typography)(() => ({
   marginBottom: 20,
+  marginTop: 30,
   textAlign: "center",
+  [theme.breakpoints.down("md")]: {
+    fontSize: 30,
+  },
 }));
 
 const StyledTypographyContent = styled(Typography)(({ theme }) => ({
   fontSize: 24,
   textAlign: "center",
+  
   [theme.breakpoints.down("md")]: {
     fontSize: 14,
+    marginLeft: "40px",
+  marginRight: "40px",
   },
 }));
 
@@ -53,16 +67,19 @@ function Home() {
       });
   }, []);
   return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
     <PageSection component="section">
     <PageContainer
       sx={(theme) => ({
-        mt: 15,
+        mt: 5,
         mb: 30,
         pt: 0,
         pb: 0,
         [theme.breakpoints.down("md")]: {
           mt: 5,
           mb: 8,
+        
         },
       })}
     >
@@ -74,7 +91,7 @@ function Home() {
           maxWidth: "40%",
         }}
       >
-        <Grid item md={2} sx={{ mt: 0 }}>
+        <Grid item xs={12}md={2} sx={{ mt: 0 }}>
           <Image src={"/logo.png"} width={80} height={80} alt="church Logo" />
         </Grid>
         <Grid item md={10}>
@@ -104,7 +121,7 @@ function Home() {
     <Grid container spacing={2}>
       <Grid item lg={3} />
       <Grid item lg={6} xl={6} sm={12} xs={12}>
-        <StyledTypographyHeading variant="h1" color="#283593">
+        <StyledTypographyHeading variant="h3" color="#283593">
           Welcome to Kisii Central SDA Church
         </StyledTypographyHeading>
         <StyledTypographyContent variant="body1">
@@ -158,6 +175,7 @@ function Home() {
     </Grid>
  </PageContainer>
  </PageSection>
+ </ThemeProvider>
   )
 }
 

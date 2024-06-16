@@ -16,7 +16,7 @@ import Avatar from "@mui/material/Avatar";
 const theme = createTheme({
   palette: {
     background: {
-      default: "#8bc34a", // Set your desired background color here
+      default: "#EEEEEE", // Set your desired background color here
     },
   },
 });

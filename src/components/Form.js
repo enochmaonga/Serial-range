@@ -110,7 +110,7 @@ const Form = () => {
   };
 
   return (
-    <Box style={{ backgroundColor: "#8bc34a", overflow: "hidden" }}>
+    <Box style={{ backgroundColor: "#EEEEEE", overflow: "hidden" }}>
       <Grid
         sx={{
           textAlign: "center", // Center the form horizontally
@@ -161,7 +161,7 @@ const Form = () => {
             alignContent: "center",
             textAlign: "center",
             marginTop: "5px",
-            color: "white",
+            // color: "white",
           }}
         >
           Kindly fill in the required details below and submit.

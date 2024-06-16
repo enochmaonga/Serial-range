@@ -102,7 +102,7 @@ const CarsRegistry = () => {
   };
 
   return (
-    <Box style={{ backgroundColor: "#8bc34a", overflow: "hidden" }}>
+    <Box style={{ backgroundColor: "#EEEEEE", overflow: "hidden" }}>
       <Grid
         sx={{
           textAlign: "center", // Center the form horizontally
@@ -153,7 +153,7 @@ const CarsRegistry = () => {
             alignContent: "center",
             textAlign: "center",
             marginTop: "10px",
-            color: "white",
+            // color: "white",
           }}
         >
           Kindly fill in the required details below and submit.
@@ -171,7 +171,7 @@ const CarsRegistry = () => {
             paragraph
             style={{
               marginTop: "5px",
-              color: "white",
+            //   color: "white",
               marginLeft: "5%",
             }}
           >
@@ -194,8 +194,9 @@ const CarsRegistry = () => {
             paragraph
             style={{
               marginTop: "5px",
-              color: "white",
+            //   color: "white",
               marginLeft: "5%",
+              marginRight: "auto",
             }}
           >
             The car registration details collected are solely for the purpose of
