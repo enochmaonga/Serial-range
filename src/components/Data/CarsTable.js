@@ -11,10 +11,9 @@ import {
   Box,
   Typography,
   Grid,
-  ListItemText,
 } from "@mui/material";
 import { v4 as uuidv4 } from "uuid";
-import { SERVER_URL } from "@/config";
+// import { SERVER_URL } from "@/config";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import Link from "next/link";
@@ -25,7 +24,7 @@ const BoldTableCell = styled(TableCell)({
   backgroundColor: "#8bc34a",
 });
 
-// const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 const CarsTable = () => {
   const [data, setData] = useState([]);
@@ -42,7 +41,7 @@ const CarsTable = () => {
         if (!authToken) {
           throw new Error("No authentication token found.");
         }
-        const response = await fetch(`${SERVER_URL}/cars`, {
+        const response = await fetch(`${backendUrl}/cars`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

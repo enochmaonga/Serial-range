@@ -11,10 +11,10 @@ import {
   Box,
   Typography,
   Grid,
-  ListItemText,
+  // ListItemText,
 } from "@mui/material";
 import { v4 as uuidv4 } from "uuid";
-import { SERVER_URL } from "@/config";
+// import { SERVER_URL } from "@/config";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import Link from "next/link";

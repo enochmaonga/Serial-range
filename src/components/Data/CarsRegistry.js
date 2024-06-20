@@ -14,7 +14,7 @@ import {
 import { useRouter } from "next/router";
 import { HiMiniCheckCircle } from "react-icons/hi2";
 import Image from "next/image";
-import { SERVER_URL } from "@/config";
+// import { SERVER_URL } from "@/config";
 
 const CarsRegistry = () => {
   const [loading, setLoading] = useState(false);
@@ -24,7 +24,7 @@ const CarsRegistry = () => {
   const [dialogContent, setDialogContent] = useState("");
   const router = useRouter();
 
-  // const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   const formik = useFormik({
     initialValues: {
@@ -61,7 +61,7 @@ const CarsRegistry = () => {
 
   const handleNewEntry = async (allFormValues) => {
     try {
-      const response = await fetch(`${SERVER_URL}/newCars`, {
+      const response = await fetch(`${backendUrl}/newCars`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
