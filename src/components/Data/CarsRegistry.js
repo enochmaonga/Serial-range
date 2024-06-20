@@ -14,6 +14,7 @@ import {
 import { useRouter } from "next/router";
 import { HiMiniCheckCircle } from "react-icons/hi2";
 import Image from "next/image";
+import { SERVER_URL } from "@/config";
 
 const CarsRegistry = () => {
   const [loading, setLoading] = useState(false);
@@ -21,9 +22,9 @@ const CarsRegistry = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogTitle, setDialogTitle] = useState("");
   const [dialogContent, setDialogContent] = useState("");
-//   const router = useRouter();
+  const router = useRouter();
 
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+  // const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   const formik = useFormik({
     initialValues: {
@@ -33,16 +34,24 @@ const CarsRegistry = () => {
     },
     validationSchema: Yup.object({
       name: Yup.string().required("Name is required"),
-      carRegistration: Yup.string().required("carRegistration is required"),
+      carRegistration: Yup.string().required("Car Registration is required"),
       phoneNumber: Yup.string().required("Phone Number is required"),
     }),
+    onSubmit: async (values) => {
+      setLoading(true);
+      try {
+        await handleNewEntry(values);
+      } catch (error) {
+        console.error("Error submitting form:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
   });
 
   const handleDialogOpen = () => {
     setDialogTitle("Success!");
-    setDialogContent(
-      `You have successully submitted your car info.  ${serverResponse}`
-    );
+    setDialogContent(`You have successfully submitted your car info. ${serverResponse}`);
     setDialogOpen(true);
   };
 
@@ -50,55 +59,39 @@ const CarsRegistry = () => {
     setDialogOpen(false);
   };
 
-  const handleNewEntry = (allFormValues) => {
-    // Send a POST request to the server
-    fetch(`${backendUrl}/cars`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(allFormValues),
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        const data = await response.json();
-        console.log("server response:", data);
-
-        if (data.error) {
-          setServerResponse(data.error);
-        }
-        handleDialogOpen();
-      })
-      .catch((error) => {
-        console.error("There was a problem with the fetch operation:", error);
-        handleDialogOpen();
-      });
-  };
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const handleNewEntry = async (allFormValues) => {
     try {
-      // if (formik.isValid) {
-      await formik.validateForm();
-      if (Object.keys(formik.errors).length === 0) {
-        const allFormValues = { ...formik.values };
-        await handleNewEntry(allFormValues);
-      } else {
-        console.log("form is notvalid, please ill all fields");
+      const response = await fetch(`${SERVER_URL}/newCars`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(allFormValues),
+      });
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
       }
+
+      const data = await response.json();
+      console.log("server response:", data);
+
+      if (data.error) {
+        setServerResponse(data.error);
+      } else {
+        setServerResponse("Car info submitted successfully!");
+      }
+
+      handleDialogOpen();
     } catch (error) {
-      console.error("error Submitting form", error);
-    } finally {
-      setLoading(false);
+      console.error("There was a problem with the fetch operation:", error);
+      setServerResponse("Failed to submit car info.");
+      handleDialogOpen();
     }
-    console.log("Submitted:", formik.values);
   };
 
-  const handleCancel = () => {
-    // Implement cancel logic here
-    handleDialogClose(); // Close the dialog when cancel is clicked
+  const handleHome = () => {
+    router.push("/");
   };
 
   return (
@@ -153,7 +146,6 @@ const CarsRegistry = () => {
             alignContent: "center",
             textAlign: "center",
             marginTop: "10px",
-            // color: "white",
           }}
         >
           Kindly fill in the required details below and submit.
@@ -171,7 +163,6 @@ const CarsRegistry = () => {
             paragraph
             style={{
               marginTop: "5px",
-            //   color: "white",
               marginLeft: "5%",
             }}
           >
@@ -184,7 +175,6 @@ const CarsRegistry = () => {
             paragraph
             style={{
               marginTop: "5px",
-
               marginLeft: "5%",
             }}
           >
@@ -194,7 +184,6 @@ const CarsRegistry = () => {
             paragraph
             style={{
               marginTop: "5px",
-            //   color: "white",
               marginLeft: "5%",
               marginRight: "auto",
             }}
@@ -279,20 +268,32 @@ const CarsRegistry = () => {
             </Card>
           </Grid>
         </Grid>
-        <Grid container justifyContent="center" sx={{ mt: 8 }}>
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            onClick={handleSubmit}
-            sx={{ borderRadius: 4, backgroundColor: "#357a38" }}
-          >
-            Submit
-          </Button>
+        <Grid container spacing={2} justifyContent="center" sx={{ mt: 8 }}>
+          <Grid item>
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              sx={{ borderRadius: 4, backgroundColor: "#357a38" }}
+            >
+              Submit
+            </Button>
+          </Grid>
+          <Grid item>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleHome}
+              sx={{ borderRadius: 4, backgroundColor: "#357a38" }}
+            >
+              Home
+            </Button>
+          </Grid>
         </Grid>
       </form>
-      <Grid container justifyContent="center" sx={{ mt: 8, mb: 8 }}>
-      </Grid>
+      
+      <Grid container justifyContent="center" sx={{ mt: 8, mb: 8 }}></Grid>
+      
       {/* Dialog */}
       <Dialog
         open={dialogOpen}
@@ -325,7 +326,6 @@ const CarsRegistry = () => {
           <Typography variant="h6">{dialogTitle}</Typography>
           <Typography>{dialogContent}</Typography>
           <Grid>
-            {/* <Grid item md={6}> */}
             <Button
               onClick={handleDialogClose}
               variant="contained"
@@ -339,7 +339,6 @@ const CarsRegistry = () => {
             >
               Close
             </Button>
-            {/* </Grid> */}
           </Grid>
         </DialogContent>
       </Dialog>

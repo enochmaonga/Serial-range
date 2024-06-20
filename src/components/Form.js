@@ -24,8 +24,7 @@ const Form = () => {
   const [dialogContent, setDialogContent] = useState("");
   const router = useRouter();
 
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-
+  // const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
   const formik = useFormik({
     initialValues: {
       name: "",
@@ -56,12 +55,13 @@ const Form = () => {
 
   const handleNewEntry = (allFormValues) => {
     // Send a POST request to the server
-    fetch(`${backendUrl}/newEntry`, {
+    fetch(`${SERVER_URL}/newEntry`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(allFormValues),
+      
     })
       .then(async (response) => {
         if (!response.ok) {
@@ -108,7 +108,9 @@ const Form = () => {
     // Implement cancel logic here
     handleDialogClose(); // Close the dialog when cancel is clicked
   };
-
+  const handleHome = () => {
+    router.push("/");
+  };
   return (
     <Box style={{ backgroundColor: "#EEEEEE", overflow: "hidden" }}>
       <Grid
@@ -269,7 +271,17 @@ const Form = () => {
           </Button>
         </Grid>
       </form>
-      <Grid container justifyContent="center" sx={{ mt: 8, mb: 8 }}>
+      <Grid container spacing={2} justifyContent="center" sx={{ mt: 2, mb: 8 }}>
+        <Grid item>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleHome}
+            sx={{ borderRadius: 4, backgroundColor: "#357a38" }}
+          >
+            Home
+          </Button>
+        </Grid>
         <Grid item>
           <Button
             variant="contained"
@@ -280,6 +292,7 @@ const Form = () => {
           </Button>
         </Grid>
       </Grid>
+
       {/* Dialog */}
       <Dialog
         open={dialogOpen}
