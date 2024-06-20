@@ -6,6 +6,7 @@ import Button from "@mui/material/Button";
 import {
   Box,
   Card,
+  // CircularProgress,
   Dialog,
   DialogContent,
   Grid,
@@ -14,7 +15,8 @@ import {
 import { useRouter } from "next/router";
 import { HiMiniCheckCircle } from "react-icons/hi2";
 import Image from "next/image";
-// import { SERVER_URL } from "@/config";
+import { SERVER_URL } from "@/config";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const CarsRegistry = () => {
   const [loading, setLoading] = useState(false);
@@ -24,7 +26,7 @@ const CarsRegistry = () => {
   const [dialogContent, setDialogContent] = useState("");
   const router = useRouter();
 
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+  // const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   const formik = useFormik({
     initialValues: {
@@ -49,9 +51,9 @@ const CarsRegistry = () => {
     },
   });
 
-  const handleDialogOpen = () => {
-    setDialogTitle("Success!");
-    setDialogContent(`You have successfully submitted your car info. ${serverResponse}`);
+  const handleDialogOpen = (title, content) => {
+    setDialogTitle(title);
+    setDialogContent(content);
     setDialogOpen(true);
   };
 
@@ -61,7 +63,7 @@ const CarsRegistry = () => {
 
   const handleNewEntry = async (allFormValues) => {
     try {
-      const response = await fetch(`${backendUrl}/newCars`, {
+      const response = await fetch(`${SERVER_URL}/newCars`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -80,13 +82,14 @@ const CarsRegistry = () => {
         setServerResponse(data.error);
       } else {
         setServerResponse("Car info submitted successfully!");
+        handleDialogOpen("Success!", "Car info submitted successfully!");
       }
 
-      handleDialogOpen();
+      // handleDialogOpen();
     } catch (error) {
       console.error("There was a problem with the fetch operation:", error);
       setServerResponse("Failed to submit car info.");
-      handleDialogOpen();
+      handleDialogOpen("Error", "Failed to submit car info");
     }
   };
 
@@ -275,8 +278,9 @@ const CarsRegistry = () => {
               variant="contained"
               color="primary"
               sx={{ borderRadius: 4, backgroundColor: "#357a38" }}
+              disabled={loading} // Disable button while loading
             >
-              Submit
+             {loading ? <CircularProgress size={24} /> : "Submit"}
             </Button>
           </Grid>
           <Grid item>
