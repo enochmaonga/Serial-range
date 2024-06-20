@@ -288,7 +288,7 @@ const Form = () => {
             onClick={handleViewData}
             sx={{ borderRadius: 4, backgroundColor: "#357a38" }}
           >
-            View Data
+            Admin
           </Button>
         </Grid>
       </Grid>

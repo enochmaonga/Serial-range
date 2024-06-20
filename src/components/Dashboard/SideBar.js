@@ -90,12 +90,12 @@ const Sidebar = () => {
                     borderRadius: "15px",
                   }}
                 >
-                  View Data
+                  Reg Data
                 </Typography>
               </Link>
             </ListItem>
             <ListItem>
-              <Link href="/login" passHref style={{ textDecoration: "none" }}>
+              <Link href="/carlist" passHref style={{ textDecoration: "none" }}>
                 <Typography
                   variant="h6"
                   style={{
@@ -105,7 +105,7 @@ const Sidebar = () => {
                     borderRadius: "15px",
                   }}
                 >
-                  Feedback
+                  Cars
                 </Typography>
               </Link>
             </ListItem>
