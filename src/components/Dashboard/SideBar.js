@@ -26,7 +26,7 @@ const Sidebar = () => {
       >
         <div
           style={{
-            backgroundColor: "#8bc34a",
+            backgroundColor: "#EEEEEE",
             height: "100%",
             display: "flex",
             flexDirection: "column",
@@ -41,7 +41,7 @@ const Sidebar = () => {
                   style={{
                     color: "white",
                     padding: "16px",
-                    backgroundColor: "#7cb342",
+                    backgroundColor: "#9E9E9E",
                     borderRadius: "15px",
                   }}
                 >
@@ -56,7 +56,7 @@ const Sidebar = () => {
                   style={{
                     color: "white",
                     padding: "16px",
-                    backgroundColor: "#7cb342",
+                    backgroundColor: "#9E9E9E",
                     borderRadius: "15px",
                   }}
                 >
@@ -71,7 +71,7 @@ const Sidebar = () => {
                   style={{
                     color: "white",
                     padding: "16px",
-                    backgroundColor: "#7cb342",
+                    backgroundColor: "#9E9E9E",
                     borderRadius: "15px",
                   }}
                 >
@@ -86,7 +86,7 @@ const Sidebar = () => {
                   style={{
                     color: "white",
                     padding: "16px",
-                    backgroundColor: "#7cb342",
+                    backgroundColor: "#9E9E9E",
                     borderRadius: "15px",
                   }}
                 >
@@ -101,7 +101,7 @@ const Sidebar = () => {
                   style={{
                     color: "white",
                     padding: "16px",
-                    backgroundColor: "#7cb342",
+                    backgroundColor: "#9E9E9E",
                     borderRadius: "15px",
                   }}
                 >

@@ -30,7 +30,7 @@ import DropdownMenu from "@/components/DropdownMenu";
 
 const BoldTableCell = styled(TableCell)({
   fontWeight: "bold",
-  backgroundColor: "#689f38",
+  backgroundColor: "#9E9E9E",
   color: "white",
 });
 
@@ -127,7 +127,7 @@ function Users() {
                 mt: 2,
                 mb: 4,
                 ml: 5,
-                color: "white",
+                color: "#9E9E9E",
               }}
             >
               Users
@@ -161,7 +161,7 @@ function Users() {
                 <Grid item xs={12} sm={6} md={4} xl={2} sx={{ padding: 3 }}>
                   <Button
                     variant="contained"
-                    sx={{ borderRadius: 5, mt: 1, backgroundColor: "#689f38" }}
+                    sx={{ borderRadius: 5, mt: 1, backgroundColor: "#9E9E9E" }}
                     onClick={handleOpenCreateDialog}
                   >
                     Create User

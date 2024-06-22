@@ -11,25 +11,39 @@ import {
   Box,
   Typography,
   Grid,
+  Button,
+  TablePagination,
+  TextField,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { v4 as uuidv4 } from "uuid";
-// import { SERVER_URL } from "@/config";
+import { SERVER_URL } from "@/config";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import Link from "next/link";
 import Sidebar from "../Dashboard/SideBar";
+import { Parser } from "json2csv";
 
 const BoldTableCell = styled(TableCell)({
   fontWeight: "bold",
-  backgroundColor: "#8bc34a",
+  backgroundColor: "#9E9E9E",
+  wordWrap: "break-word",
+  whiteSpace: "normal",
 });
 
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+// const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 const CarsTable = () => {
   const [data, setData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5); // Rows per page
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   // const [isAdmin, setIsAdmin] = useState(true);
 
@@ -41,7 +55,7 @@ const CarsTable = () => {
         if (!authToken) {
           throw new Error("No authentication token found.");
         }
-        const response = await fetch(`${backendUrl}/cars`, {
+        const response = await fetch(`${SERVER_URL}/cars`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -90,36 +104,83 @@ const CarsTable = () => {
     fetchData();
   }, [router]);
 
+  useEffect(() => {
+    setFilteredData(
+      data.filter((car) =>
+        car.carRegistration.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    );
+    setPage(0);
+  }, [searchQuery, data]);
+
+  const downloadCSV = () => {
+    try {
+      const fields = [
+        "id",
+        "name",
+        "carRegistration",
+        "phoneNumber",
+        "createdAt",
+      ];
+      const opts = { fields };
+      const parser = new Parser(opts);
+      const csv = parser.parse(data);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "car_data.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error("Error converting data to CSV", err);
+    }
+  };
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
   return (
     <>
-      <Box
-        style={{
-          backgroundColor: "#EEEEEE",
-          width: "200px",
-          height: "100%",
-          position: "fixed",
-          left: 0,
-          top: 0,
-        }}
-      >
-        {/* Admin content goes here */}
-        <Link href="/dashboard" passHref style={{textDecoration: 'none'}}>
-        <Typography variant="h6" style={{ color: "white", padding: "16px" }}>
-          Admin Panel
-        </Typography>
-        </Link>
-        <Sidebar />
-      </Box>
-
+      {!isMobile && (
+        <Box
+          style={{
+            backgroundColor: "#EEEEEE",
+            width: "200px",
+            height: "100%",
+            position: "fixed",
+            left: 0,
+            top: 0,
+          }}
+        >
+          {/* Admin content goes here */}
+          <Link href="/dashboard" passHref style={{ textDecoration: "none" }}>
+            <Typography
+              variant="h6"
+              style={{ color: "white", padding: "16px" }}
+            >
+              Admin Panel
+            </Typography>
+          </Link>
+          <Sidebar />
+        </Box>
+      )}
       <Grid
+        container
         sx={{
           textAlign: "center", // Center the form horizontally
-          marginLeft: "auto",
+          marginLeft: isMobile ? "15%" : "auto",
           marginRight: "auto", // Set margin left and right to "auto" for centering
-          maxWidth: "40%",
+          maxWidth: isMobile ? "250px" : "40%",
         }}
       >
-        <Grid item md={2} sx={{ mt: 8 }}>
+        <Grid item xs={12} md={2} sx={{ mt: 8 }}>
           <Image src={"/logo.png"} width={100} height={100} alt="church Logo" />
         </Grid>
         <Grid item md={10}>
@@ -160,23 +221,54 @@ const CarsTable = () => {
           alignContent: "center",
           textAlign: "center",
           marginTop: "20px",
+          marginBottom: "20px",
         }}
       >
         Below is the data that has been received.
       </Typography>
+      <Grid container>
+        <Grid item xs={12} sm={12} md={8}>
+          <TextField
+            label="Search by Car Registration Number"
+            variant="outlined"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            sx={{
+              marginLeft: isMobile ? "0" : "240px",
+              marginBottom: "20px",
+              width: isMobile ? "100%" : "600px",
+            }}
+          />
+        </Grid>
+        <Grid item xs={12} sm={12} md={4}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={downloadCSV}
+            style={{
+              marginLeft: isMobile ? "0" : "240px",
+              marginBottom: "20px",
+              backgroundColor: "#9E9E9E",
+            }}
+          >
+            Download CSV
+          </Button>
+        </Grid>
+      </Grid>
+
       <TableContainer
         component={Paper}
         sx={{
           textAlign: "center",
-          marginLeft: "240px",
+          marginLeft: isMobile ? "0" : "240px",
           marginRight: "50px",
-          maxWidth: "85%",
+          maxWidth: isMobile ? "100%" : "85%",
         }}
       >
-        <Table>
+        <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <BoldTableCell>Id</BoldTableCell>
+              {/* <BoldTableCell>Id</BoldTableCell> */}
               <BoldTableCell>Name</BoldTableCell>
               <BoldTableCell>Car Registration Number</BoldTableCell>
               <BoldTableCell>Phone Number</BoldTableCell>
@@ -184,18 +276,32 @@ const CarsTable = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {data.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>{row.id}</TableCell>
-                <TableCell>{row.name}</TableCell>
-                <TableCell>{row.carRegistration}</TableCell>
-                <TableCell>{row.phoneNumber}</TableCell>
-                <TableCell>{row.createdAt}</TableCell>
-              </TableRow>
-            ))}
+            {filteredData
+              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+              .map((row) => (
+                <TableRow key={row.id}>
+                  <TableCell>{row.name}</TableCell>
+                  <TableCell>{row.carRegistration}</TableCell>
+                  <TableCell>{row.phoneNumber}</TableCell>
+                  <TableCell>{row.createdAt}</TableCell>
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
       </TableContainer>
+      <TablePagination
+        component="div"
+        count={filteredData.length}
+        page={page}
+        onPageChange={handleChangePage}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        style={{
+          marginLeft: isMobile ? "0" : "240px",
+          marginRight: "50px",
+          maxWidth: isMobile ? "100%" : "85%",
+        }}
+      />
     </>
   );
 };
