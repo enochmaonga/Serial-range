@@ -37,7 +37,7 @@ const DataTable = () => {
   const [error, setError] = useState("");
   const router = useRouter();
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5); // Rows per page
+  const [rowsPerPage, setRowsPerPage] = useState(10); // Rows per page
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
