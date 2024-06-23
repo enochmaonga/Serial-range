@@ -33,7 +33,6 @@ const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 const DataTable = () => {
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
   const [page, setPage] = useState(0);
@@ -101,14 +100,6 @@ const DataTable = () => {
     fetchData();
   }, [router]);
 
-  useEffect(() => {
-    setFilteredData(
-      data.filter((car) =>
-        car.carRegistration.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    );
-    setPage(0);
-  }, [searchQuery, data]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
