@@ -196,7 +196,7 @@ const DataTable = () => {
         <Table stickyHeader>
           <TableHead>
             <TableRow>
-              <BoldTableCell>Id</BoldTableCell>
+              {/* <BoldTableCell>Id</BoldTableCell> */}
               <BoldTableCell>Name</BoldTableCell>
               <BoldTableCell>Department</BoldTableCell>
               <BoldTableCell>Home Church</BoldTableCell>
@@ -207,7 +207,7 @@ const DataTable = () => {
           <TableBody>
             {data.map((row) => (
               <TableRow key={row.id}>
-                <TableCell>{row.id}</TableCell>
+                {/* <TableCell>{row.id}</TableCell> */}
                 <TableCell>{row.name}</TableCell>
                 <TableCell>{row.department}</TableCell>
                 <TableCell>{row.homeChurch}</TableCell>
