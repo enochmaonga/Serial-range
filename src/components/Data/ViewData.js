@@ -11,6 +11,9 @@ import {
   Box,
   Typography,
   Grid,
+  useMediaQuery,
+  useTheme,
+  TablePagination,
   // ListItemText,
 } from "@mui/material";
 import { v4 as uuidv4 } from "uuid";
@@ -29,8 +32,14 @@ const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
 const DataTable = () => {
   const [data, setData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5); // Rows per page
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   // const [isAdmin, setIsAdmin] = useState(true);
 
@@ -92,8 +101,26 @@ const DataTable = () => {
     fetchData();
   }, [router]);
 
+  useEffect(() => {
+    setFilteredData(
+      data.filter((car) =>
+        car.carRegistration.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    );
+    setPage(0);
+  }, [searchQuery, data]);
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
   return (
     <>
+    {!isMobile && (
       <Box
         style={{
           backgroundColor: "#EEEEEE",
@@ -112,19 +139,19 @@ const DataTable = () => {
         </Link>
         <Sidebar />
       </Box>
-
+    )}
       <Grid
         sx={{
           textAlign: "center", // Center the form horizontally
-          marginLeft: "auto",
+          marginLeft: isMobile ? "15%" : "auto",
           marginRight: "auto", // Set margin left and right to "auto" for centering
-          maxWidth: "40%",
+          maxWidth: isMobile ? "250px" : "40%",
         }}
       >
-        <Grid item md={2} sx={{ mt: 8 }}>
+        <Grid item xs={12} sx={{ mt: 2 }}>
           <Image src={"/logo.png"} width={100} height={100} alt="church Logo" />
         </Grid>
-        <Grid item md={10}>
+        <Grid item xs={12}>
           <Typography
             style={{
               alignContent: "center",
@@ -170,12 +197,12 @@ const DataTable = () => {
         component={Paper}
         sx={{
           textAlign: "center",
-          marginLeft: "240px",
+          marginLeft: isMobile ? "0" : "240px",
           marginRight: "50px",
-          maxWidth: "85%",
+          maxWidth: isMobile ? "100%" : "85%",
         }}
       >
-        <Table>
+        <Table stickyHeader>
           <TableHead>
             <TableRow>
               <BoldTableCell>Id</BoldTableCell>
@@ -200,6 +227,19 @@ const DataTable = () => {
           </TableBody>
         </Table>
       </TableContainer>
+      <TablePagination
+        component="div"
+        count={filteredData.length}
+        page={page}
+        onPageChange={handleChangePage}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        style={{
+          marginLeft: isMobile ? "0" : "240px",
+          marginRight: "50px",
+          maxWidth: isMobile ? "100%" : "85%",
+        }}
+        />
     </>
   );
 };
