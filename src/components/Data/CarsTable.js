@@ -180,10 +180,10 @@ const CarsTable = () => {
           maxWidth: isMobile ? "250px" : "40%",
         }}
       >
-        <Grid item xs={12} md={2} sx={{ mt: 8 }}>
+        <Grid item xs={12}  sx={{ mt: 8 }}>
           <Image src={"/logo.png"} width={100} height={100} alt="church Logo" />
         </Grid>
-        <Grid item md={10}>
+        <Grid item item xs={12}  >
           <Typography
             style={{
               alignContent: "center",
