@@ -180,6 +180,7 @@ const DataTable = () => {
           alignContent: "center",
           textAlign: "center",
           marginTop: "20px",
+          // marginLeft: "auto%",
         }}
       >
         Below is the data that has been received.
