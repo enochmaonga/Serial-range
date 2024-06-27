@@ -55,17 +55,17 @@ function Home() {
   const isMobile = useMediaQuery(themeDefinitions.breakpoints.down("md"));
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    // Make an API call to your Node.js server
-    fetch('http://localhost:3001/api/someEndpoint')
-      .then((response) => response.json())
-      .then((data) => {
-        setMessage(data.message);
-      })
-      .catch((error) => {
-        console.error('Error fetching data:', error);
-      });
-  }, []);
+  // useEffect(() => {
+  //   // Make an API call to your Node.js server
+  //   fetch('http://localhost:3001/api/someEndpoint')
+  //     .then((response) => response.json())
+  //     .then((data) => {
+  //       setMessage(data.message);
+  //     })
+  //     .catch((error) => {
+  //       console.error('Error fetching data:', error);
+  //     });
+  // }, []);
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -121,14 +121,14 @@ function Home() {
     <Grid container spacing={2}>
       <Grid item lg={3} />
       <Grid item lg={6} xl={6} sm={12} xs={12}>
-        <StyledTypographyHeading variant="h3" color="#283593">
+        <StyledTypographyHeading variant="h3" color="#1B5E20">
           Welcome to Kisii Central SDA Church
         </StyledTypographyHeading>
         <StyledTypographyContent variant="body1">
         The mission of the Seventh-day Adventist Church:{" "}
           <StyledTypographyItalic
             variant="body1"
-            color="primary"
+            color="#1B5E20"
             component="span"
           >
             to call all people to become disciples of Jesus Christ, 
@@ -136,7 +136,7 @@ function Home() {
           to proclaim the everlasting gospel embraced by the three angels&apos; messages {" "}
           <StyledTypographyItalic
             variant="body1"
-            color="primary"
+            color="#1B5E20"
             component="span"
           >
           (Revelation 14:6-12),
@@ -144,7 +144,7 @@ function Home() {
           and to prepare the world{" "}
           <StyledTypographyItalic
             variant="body1"
-            color="primary"
+            color="#1B5E20"
             component="span"
           >
        for Christ&apos;s
@@ -157,6 +157,7 @@ function Home() {
             <Button
               variant="outlined"
               size={isMobile ? "small" : "large"}
+              style={{color: "#1B5E20"}}
             >
              Car Registration
             </Button>
@@ -165,6 +166,7 @@ function Home() {
             <Button
               variant="outlined"
               size={isMobile ? "small" : "large"}
+              style={{color: "#1B5E20"}}
             >
              Regular Registration
             </Button>
