@@ -25,7 +25,8 @@ import Sidebar from "../Dashboard/SideBar";
 
 const BoldTableCell = styled(TableCell)({
   fontWeight: "bold",
-  backgroundColor: "#EEEEEE",
+  backgroundColor: "#1B5E20",
+  color: "white",
 });
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;

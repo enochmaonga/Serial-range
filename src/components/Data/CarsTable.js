@@ -27,9 +27,10 @@ import { Parser } from "json2csv";
 
 const BoldTableCell = styled(TableCell)({
   fontWeight: "bold",
-  backgroundColor: "#9E9E9E",
+  backgroundColor: "#1B5E20",
   wordWrap: "break-word",
   whiteSpace: "normal",
+  color: "white",
 });
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
@@ -248,7 +249,7 @@ const CarsTable = () => {
             style={{
               marginLeft: isMobile ? "0" : "240px",
               marginBottom: "20px",
-              backgroundColor: "#9E9E9E",
+              backgroundColor: "#1B5E20",
             }}
           >
             Download CSV
@@ -263,10 +264,11 @@ const CarsTable = () => {
           marginLeft: isMobile ? "0" : "240px",
           marginRight: "50px",
           maxWidth: isMobile ? "100%" : "85%",
+          
         }}
       >
-        <Table stickyHeader>
-          <TableHead>
+        <Table stickyHeader >
+          <TableHead >
             <TableRow>
               {/* <BoldTableCell>Id</BoldTableCell> */}
               <BoldTableCell>Name</BoldTableCell>

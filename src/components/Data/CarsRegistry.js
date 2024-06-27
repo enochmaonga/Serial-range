@@ -277,7 +277,7 @@ const CarsRegistry = () => {
               type="submit"
               variant="contained"
               color="primary"
-              sx={{ borderRadius: 4, backgroundColor: "#357a38" }}
+              sx={{ borderRadius: 4, backgroundColor: "#1B5E20" }}
               disabled={loading} // Disable button while loading
             >
              {loading ? <CircularProgress size={24} /> : "Submit"}
@@ -288,7 +288,7 @@ const CarsRegistry = () => {
               variant="contained"
               color="primary"
               onClick={handleHome}
-              sx={{ borderRadius: 4, backgroundColor: "#357a38" }}
+              sx={{ borderRadius: 4, backgroundColor: "#1B5E20" }}
             >
               Home
             </Button>
@@ -337,7 +337,7 @@ const CarsRegistry = () => {
               style={{
                 marginTop: "15px",
                 borderRadius: "30px",
-                backgroundColor: "#357a38",
+                backgroundColor: "#1B5E20",
                 width: "100%",
               }} // Adjust the margin as needed
             >

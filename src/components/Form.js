@@ -265,7 +265,7 @@ const Form = () => {
             variant="contained"
             color="primary"
             onClick={handleSubmit}
-            sx={{ borderRadius: 4, backgroundColor: "#357a38" }}
+            sx={{ borderRadius: 4, backgroundColor: "#1B5E20" }}
           >
             Submit
           </Button>
@@ -277,7 +277,7 @@ const Form = () => {
             variant="contained"
             color="primary"
             onClick={handleHome}
-            sx={{ borderRadius: 4, backgroundColor: "#357a38" }}
+            sx={{ borderRadius: 4, backgroundColor: "#1B5E20" }}
           >
             Home
           </Button>
@@ -286,7 +286,7 @@ const Form = () => {
           <Button
             variant="contained"
             onClick={handleViewData}
-            sx={{ borderRadius: 4, backgroundColor: "#357a38" }}
+            sx={{ borderRadius: 4, backgroundColor: "#1B5E20" }}
           >
             Admin
           </Button>
@@ -333,7 +333,7 @@ const Form = () => {
               style={{
                 marginTop: "15px",
                 borderRadius: "30px",
-                backgroundColor: "#357a38",
+                backgroundColor: "#1B5E20",
                 width: "100%",
               }} // Adjust the margin as needed
             >
