@@ -81,7 +81,7 @@ const UploadSerials = () => {
         });
 
         if (!response.ok) {
-          const errorText = await response.text(); // Get error message
+          const errorText = await response.text();
           throw new Error(errorText || "Failed to upload serials.");
         }
 
