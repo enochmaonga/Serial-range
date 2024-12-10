@@ -14,11 +14,11 @@ const Login = () => {
 
   // Check if the user is already logged in
   useEffect(() => {
-    const loggedInToken = localStorage.getItem("token");
-    if (loggedInToken) {
-      setToken(loggedInToken);
-      // Redirect to the dashboard or any other route
-      // router.push('/view-data'); // Replace with your actual dashboard route
+    if (typeof window !== "undefined") {
+      const loggedInToken = localStorage.getItem("token");
+      if (loggedInToken) {
+        setToken(loggedInToken);
+      }
     }
   }, []);
 
