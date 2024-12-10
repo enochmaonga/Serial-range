@@ -4,8 +4,8 @@ import Head from "next/head";
 const Login = () => {
   return (
     <>
-        <Head>
-        <title> KCC | Login</title>
+      <Head>
+        <title> Saf | Login</title>
       </Head>
       <LoginForm />
     </>

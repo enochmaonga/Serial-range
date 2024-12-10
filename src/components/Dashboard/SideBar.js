@@ -3,8 +3,13 @@ import Drawer from "@mui/material/Drawer";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import { Typography } from "@mui/material";
-import { createTheme, ThemeProvider } from "@mui/material/styles"; 
+import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Link from "next/link";
+import { AiOutlineHome } from "react-icons/ai";
+import { TbUsers } from "react-icons/tb";
+import { RiAdminLine } from "react-icons/ri";
+import { RiDatabaseLine } from "react-icons/ri";
+import { FaCloudUploadAlt } from "react-icons/fa";
 
 // Define your custom theme
 const theme = createTheme({
@@ -19,11 +24,8 @@ const theme = createTheme({
 
 const Sidebar = () => {
   return (
-    <ThemeProvider theme={theme}> 
-      <Drawer
-        variant="permanent"
-        anchor="left"
-      >
+    <ThemeProvider theme={theme}>
+      <Drawer variant="permanent" anchor="left">
         <div
           style={{
             backgroundColor: "#EEEEEE",
@@ -35,16 +37,19 @@ const Sidebar = () => {
         >
           <List style={{ marginTop: "100px" }}>
             <ListItem>
-              <Link href="/dashboard" passHref style={{ textDecoration: "none" }}>
+              <Link
+                href="/dashboard"
+                passHref
+                style={{ textDecoration: "none" }}
+              >
                 <Typography
-                  variant="h6"
                   style={{
                     color: "white",
                     padding: "16px",
-                    backgroundColor: "#1B5E20",
-                    borderRadius: "15px",
+                    color: "grey",
                   }}
                 >
+                  <RiAdminLine style={{ marginRight: "5px" }} />
                   Admin Panel
                 </Typography>
               </Link>
@@ -52,14 +57,13 @@ const Sidebar = () => {
             <ListItem>
               <Link href="/users" passHref style={{ textDecoration: "none" }}>
                 <Typography
-                  variant="h6"
                   style={{
                     color: "white",
                     padding: "16px",
-                    backgroundColor: "#1B5E20",
-                    borderRadius: "15px",
+                    color: "grey",
                   }}
                 >
+                  <TbUsers style={{ marginRight: "5px" }} />
                   User Management
                 </Typography>
               </Link>
@@ -67,45 +71,46 @@ const Sidebar = () => {
             <ListItem>
               <Link href="/" passHref style={{ textDecoration: "none" }}>
                 <Typography
-                  variant="h6"
                   style={{
                     color: "white",
                     padding: "16px",
-                    backgroundColor: "#1B5E20",
-                    borderRadius: "15px",
+                    color: "grey",
                   }}
                 >
+                  <AiOutlineHome style={{ marginRight: "5px" }} />
                   Home
                 </Typography>
               </Link>
             </ListItem>
             <ListItem>
-              <Link href="/view-data" passHref style={{ textDecoration: "none" }}>
+              <Link
+                href="/seriallist"
+                passHref
+                style={{ textDecoration: "none" }}
+              >
                 <Typography
-                  variant="h6"
                   style={{
                     color: "white",
                     padding: "16px",
-                    backgroundColor: "#1B5E20",
-                    borderRadius: "15px",
+                    color: "grey",
                   }}
                 >
-                  Reg Data
+                  <RiDatabaseLine style={{ marginRight: "5px" }} />
+                  Entered Data
                 </Typography>
               </Link>
             </ListItem>
             <ListItem>
-              <Link href="/carlist" passHref style={{ textDecoration: "none" }}>
+              <Link href="/upload" passHref style={{ textDecoration: "none" }}>
                 <Typography
-                  variant="h6"
                   style={{
                     color: "white",
                     padding: "16px",
-                    backgroundColor: "#1B5E20",
-                    borderRadius: "15px",
+                    color: "grey",
                   }}
                 >
-                  Cars
+                  <FaCloudUploadAlt style={{ marginRight: "5px" }} />
+                  Upload Serials
                 </Typography>
               </Link>
             </ListItem>

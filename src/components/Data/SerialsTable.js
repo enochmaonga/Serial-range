@@ -18,7 +18,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { v4 as uuidv4 } from "uuid";
-// import { SERVER_URL } from "@/config";
+import { SERVER_URL } from "@/config";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import Link from "next/link";
@@ -35,7 +35,7 @@ const BoldTableCell = styled(TableCell)({
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-const CarsTable = () => {
+const SerialsTable = () => {
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -56,7 +56,7 @@ const CarsTable = () => {
         if (!authToken) {
           throw new Error("No authentication token found.");
         }
-        const response = await fetch(`${backendUrl}/cars`, {
+        const response = await fetch(`${SERVER_URL}/cars`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -74,8 +74,8 @@ const CarsTable = () => {
             if (responseData.length > 0) {
               const fetchedItems = responseData.map((item) => ({
                 id: uuidv4(),
-                name: item.name,
-                carRegistration: item.carRegistration,
+                serial: item.serial,
+                denomination: item.denomination,
                 phoneNumber: item.phoneNumber,
                 createdAt: item.createdAt,
               }));
@@ -107,8 +107,8 @@ const CarsTable = () => {
 
   useEffect(() => {
     setFilteredData(
-      data.filter((car) =>
-        car.carRegistration.toLowerCase().includes(searchQuery.toLowerCase())
+      data.filter((item) =>
+        item.serial?.toLowerCase().includes(searchQuery.toLowerCase())
       )
     );
     setPage(0);
@@ -116,21 +116,23 @@ const CarsTable = () => {
 
   const downloadCSV = () => {
     try {
-      const fields = [
-        "id",
-        "name",
-        "carRegistration",
-        "phoneNumber",
-        "createdAt",
-      ];
-      const opts = { fields };
+      const fields = ["denomination", "serial", "phoneNumber", "createdAt"];
+      const opts = {
+        fields,
+        transforms: [
+          (row) => ({
+            ...row,
+            serial: `'${row.serial}`, // Prefix serial numbers with a single quote
+          }),
+        ],
+      };
       const parser = new Parser(opts);
       const csv = parser.parse(data);
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", "car_data.csv");
+      link.setAttribute("download", "airtime_data.csv");
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -181,29 +183,15 @@ const CarsTable = () => {
           maxWidth: isMobile ? "250px" : "40%",
         }}
       >
-        <Grid item xs={12}  sx={{ mt: 2 }}>
-          <Image src={"/logo.png"} width={100} height={100} alt="church Logo" />
+        <Grid item xs={12} sx={{ mt: 2 }}>
+          <Image
+            src={"/safaricom-logo1.png"}
+            width={300}
+            height={50}
+            alt="Saf Logo"
+          />
         </Grid>
-        <Grid item xs={12}  >
-          <Typography
-            style={{
-              alignContent: "center",
-              textAlign: "center",
-            }}
-            variant="h5"
-          >
-            Seventh Day Adventist Church
-          </Typography>
-          <Typography
-            style={{
-              alignContent: "center",
-              textAlign: "center",
-              marginTop: "5px",
-            }}
-            variant="h5"
-          >
-            Kisii Central
-          </Typography>
+        <Grid item xs={12}>
           <Typography
             style={{
               alignContent: "center",
@@ -212,7 +200,7 @@ const CarsTable = () => {
             }}
             variant="h6"
           >
-            Car Details
+            Issued Airtime Details
           </Typography>
         </Grid>
       </Grid>
@@ -230,7 +218,7 @@ const CarsTable = () => {
       <Grid container>
         <Grid item xs={12} sm={12} md={8}>
           <TextField
-            label="Search by Car Registration Number"
+            label="Phone Number"
             variant="outlined"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -264,15 +252,13 @@ const CarsTable = () => {
           marginLeft: isMobile ? "0" : "240px",
           marginRight: "50px",
           maxWidth: isMobile ? "100%" : "85%",
-          
         }}
       >
-        <Table stickyHeader >
-          <TableHead >
+        <Table stickyHeader>
+          <TableHead>
             <TableRow>
-              {/* <BoldTableCell>Id</BoldTableCell> */}
-              <BoldTableCell>Name</BoldTableCell>
-              <BoldTableCell>Car Registration Number</BoldTableCell>
+              <BoldTableCell>Denomination</BoldTableCell>
+              <BoldTableCell>Serial Number</BoldTableCell>
               <BoldTableCell>Phone Number</BoldTableCell>
               <BoldTableCell>Date</BoldTableCell>
             </TableRow>
@@ -282,8 +268,8 @@ const CarsTable = () => {
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((row) => (
                 <TableRow key={row.id}>
-                  <TableCell>{row.name}</TableCell>
-                  <TableCell>{row.carRegistration}</TableCell>
+                  <TableCell>{row.denomination}</TableCell>
+                  <TableCell>{row.serial}</TableCell>
                   <TableCell>{row.phoneNumber}</TableCell>
                   <TableCell>{row.createdAt}</TableCell>
                 </TableRow>
@@ -308,4 +294,4 @@ const CarsTable = () => {
   );
 };
 
-export default CarsTable;
+export default SerialsTable;
