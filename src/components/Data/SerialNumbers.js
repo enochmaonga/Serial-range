@@ -19,11 +19,13 @@ function SerialNumbers() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+
   useEffect(() => {
     const fetchSerialNumbers = async () => {
       try {
         console.log("Fetching serial numbers from server...");
-        const response = await fetch(`${SERVER_URL}/serial`);
+        const response = await fetch(`${backendUrl}/serial`);
 
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);

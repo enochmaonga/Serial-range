@@ -27,6 +27,8 @@ const UploadSerials = () => {
   const [serials, setSerials] = useState([]);
   const router = useRouter();
 
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+
   const formik = useFormik({
     initialValues: {
       denomination: "",
@@ -69,7 +71,7 @@ const UploadSerials = () => {
 
       setLoading(true);
       try {
-        const response = await fetch(`${SERVER_URL}/generateSerials`, {
+        const response = await fetch(`${backendUrl}/generateSerials`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

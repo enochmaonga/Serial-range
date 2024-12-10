@@ -33,8 +33,6 @@ const BoldTableCell = styled(TableCell)({
   color: "white",
 });
 
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-
 const SerialsTable = () => {
   const [data, setData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
@@ -47,6 +45,7 @@ const SerialsTable = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   // const [isAdmin, setIsAdmin] = useState(true);
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -56,7 +55,7 @@ const SerialsTable = () => {
         if (!authToken) {
           throw new Error("No authentication token found.");
         }
-        const response = await fetch(`${SERVER_URL}/cars`, {
+        const response = await fetch(`${backendUrl}/cars`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

@@ -28,10 +28,12 @@ const SerialsRegistry = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMessage, setDialogMessage] = useState("");
 
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+
   useEffect(() => {
     const fetchDenominations = async () => {
       try {
-        const response = await fetch(`${SERVER_URL}/serial`);
+        const response = await fetch(`${backendUrl}/serial`);
         const data = await response.json();
         setDenominations(data.denominations || []);
       } catch (error) {
@@ -72,7 +74,7 @@ const SerialsRegistry = () => {
     onSubmit: async (values, { resetForm }) => {
       setLoading(true);
       try {
-        const response = await fetch(`${SERVER_URL}/newCars`, {
+        const response = await fetch(`${backendUrl}/newCars`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
