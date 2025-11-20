@@ -103,39 +103,18 @@ function Home() {
           <Grid container spacing={2}>
             <Grid item lg={3} />
             <Grid item lg={6} xl={6} sm={12} xs={12}>
-              {/* <StyledTypographyHeading variant="h3" color="#1B5E20">
-                Welcome to Safaricom Kisii
-              </StyledTypographyHeading>
-              <StyledTypographyContent variant="body1">
-                The mission of the Seventh-day Adventist Church:{" "}
-                <StyledTypographyItalic
-                  variant="body1"
-                  color="#1B5E20"
-                  component="span"
-                >
-                  to call all people to become disciples of Jesus Christ,
-                </StyledTypographyItalic>{" "}
-                to proclaim the everlasting gospel embraced by the three
-                angels&apos; messages{" "}
-                <StyledTypographyItalic
-                  variant="body1"
-                  color="#1B5E20"
-                  component="span"
-                >
-                  (Revelation 14:6-12),
-                </StyledTypographyItalic>{" "}
-                and to prepare the world{" "}
-                <StyledTypographyItalic
-                  variant="body1"
-                  color="#1B5E20"
-                  component="span"
-                >
-                  for Christ&apos;s
-                </StyledTypographyItalic>{" "}
-                soon return.
-              </StyledTypographyContent> */}
+              
               <SectionOneButtonWrapper>
                 <Stack direction="row" spacing={5}>
+                  <NextLink href="/invoice-generator" passHref>
+                    <Button
+                      variant="outlined"
+                      size={isMobile ? "small" : "large"}
+                      style={{ color: "#1B5E20" }}
+                    >
+                      Proforma Invoice
+                    </Button>
+                  </NextLink>
                   <NextLink href="/useSerials" passHref>
                     <Button
                       variant="outlined"
