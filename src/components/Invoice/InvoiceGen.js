@@ -201,14 +201,14 @@ const ProformaInvoice = ({
                         top: "40%",
                         left: "20%",
                         transform: "rotate(-30deg)",
-                        fontSize: "4rem",
+                        fontSize: "3rem",
                         color: "rgba(200,200,200,0.2)",
                     }}
                 >
                     PROFORMA INVOICE
                 </Typography>
 
-                <Typography variant="h4" align="center" gutterBottom>
+                <Typography variant="h5" align="center" gutterBottom>
                     PROFORMA INVOICE
                 </Typography>
                 <Box sx={{ mb: 2 }}>
@@ -228,7 +228,7 @@ const ProformaInvoice = ({
                         <TableRow>
                             <TableCell>Description</TableCell>
                             <TableCell>Qty</TableCell>
-                            <TableCell>Unit Price</TableCell>
+                            <TableCell>Unit Price(inclusive of 16% VAT)</TableCell>
                             <TableCell>Value</TableCell>
                         </TableRow>
                     </TableHead>
