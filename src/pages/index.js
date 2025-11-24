@@ -3,7 +3,6 @@ import {
   Button,
   Container,
   CssBaseline,
-  Grid,
   Stack,
   ThemeProvider,
   Typography,
@@ -12,135 +11,111 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import NextLink from "next/link";
-import PageSection from "@/components/PageSection";
-import PageContainer from "@/components/PageContainer";
 import Image from "next/image";
 
 const theme = createTheme({
   palette: {
     background: {
-      default: "#EEEEEE", // Set your desired background color here
+      default: "#F5F5F5",
     },
   },
 });
 
-const StyledTypographyHeading = styled(Typography)(() => ({
-  marginBottom: 20,
-  marginTop: 30,
-  textAlign: "center",
-  [theme.breakpoints.down("md")]: {
-    fontSize: 30,
+const ActionButton = styled(Button)(({ theme }) => ({
+  borderRadius: 12,
+  paddingLeft: 32,
+  paddingRight: 32,
+  textTransform: "none",
+  fontWeight: 600,
+  borderWidth: 2,
+  "&:hover": {
+    borderWidth: 2,
   },
 }));
 
-const StyledTypographyContent = styled(Typography)(({ theme }) => ({
-  fontSize: 24,
-  textAlign: "center",
-
-  [theme.breakpoints.down("md")]: {
-    fontSize: 14,
-    marginLeft: "40px",
-    marginRight: "40px",
-  },
-}));
-
-const StyledTypographyItalic = styled(Typography)(({ theme }) => ({
-  fontSize: 24,
-  fontStyle: "italic",
-  [theme.breakpoints.down("md")]: {
-    fontSize: 14,
-  },
-}));
-
-const SectionOneButtonWrapper = styled(Box)(() => ({
-  display: "flex",
-  justifyContent: "center",
-  paddingLeft: 24,
-  paddingRight: 24,
-  marginTop: 50,
-}));
-function Home() {
-  const themeDefinitions = useTheme();
-  const isMobile = useMediaQuery(themeDefinitions.breakpoints.down("md"));
-  const [message, setMessage] = useState("");
+export default function Home() {
+  const muiTheme = useTheme();
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down("md"));
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <PageSection component="section">
-        <PageContainer
-          sx={(theme) => ({
-            mt: 5,
-            mb: 30,
-            pt: 0,
-            pb: 0,
-            [theme.breakpoints.down("md")]: {
-              mt: 5,
-              mb: 8,
-            },
-          })}
-        >
-          <Grid
-            sx={{
-              textAlign: "center", // Center the form horizontally
-              marginLeft: "auto",
-              marginRight: "auto", // Set margin left and right to "auto" for centering
-              maxWidth: "40%",
-            }}
-          >
-            <Grid item xs={12} md={2} sx={{ mt: 10 }}>
-              <Image
-                src={"/safaricom-logo1.png"}
-                width={320}
-                height={60}
-                alt="church Logo"
-              />
-            </Grid>
-          </Grid>
 
-          <Grid container spacing={2}>
-            <Grid item lg={3} />
-            <Grid item lg={6} xl={6} sm={12} xs={12}>
-              
-              <SectionOneButtonWrapper>
-                <Stack direction="row" spacing={5}>
-                  <NextLink href="/invoice-generator" passHref>
-                    <Button
-                      variant="outlined"
-                      size={isMobile ? "small" : "large"}
-                      style={{ color: "#1B5E20" }}
-                    >
-                      Proforma Invoice
-                    </Button>
-                  </NextLink>
-                  <NextLink href="/useSerials" passHref>
-                    <Button
-                      variant="outlined"
-                      size={isMobile ? "small" : "large"}
-                      style={{ color: "#1B5E20" }}
-                    >
-                      Entry Form
-                    </Button>
-                  </NextLink>
-                  <NextLink href="/login" passHref>
-                    <Button
-                      variant="outlined"
-                      size={isMobile ? "small" : "large"}
-                      style={{ color: "#1B5E20" }}
-                    >
-                      Admin
-                    </Button>
-                  </NextLink>
-                </Stack>
-              </SectionOneButtonWrapper>
-            </Grid>
-          </Grid>
-        </PageContainer>
-      </PageSection>
+      <Container
+        maxWidth="md"
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          textAlign: "center",
+          py: 6,
+        }}
+      >
+        <Box sx={{ mb: 4 }}>
+          <Image
+            src="/safaricom-logo1.png"
+            width={300}
+            height={60}
+            alt="Retail System Logo"
+          />
+        </Box>
+        <Typography
+          variant={isMobile ? "h5" : "h4"}
+          fontWeight={700}
+          sx={{ mb: 1 }}
+        >
+          Retail Operations Efficiency Tools
+        </Typography>
+
+        <Typography
+          variant={isMobile ? "body1" : "h6"}
+          sx={{ color: "text.secondary", mb: 6, px: 2 }}
+        >
+          Simple. Fast. Reliable Retail Tools for Daily Operations.
+        </Typography>
+        <Stack
+          spacing={3}
+          direction={isMobile ? "column" : "row"}
+          sx={{ width: isMobile ? "100%" : "auto" }}
+        >
+          <NextLink href="/invoice-generator" passHref>
+            <ActionButton
+              variant="outlined"
+              size={isMobile ? "medium" : "large"}
+              sx={{ borderColor: "#1B5E20", color: "#1B5E20" }}
+              fullWidth={isMobile}
+            >
+              Proforma Invoice
+            </ActionButton>
+          </NextLink>
+
+          <NextLink href="/useSerials" passHref>
+            <ActionButton
+              variant="outlined"
+              size={isMobile ? "medium" : "large"}
+              sx={{ borderColor: "#1B5E20", color: "#1B5E20" }}
+              fullWidth={isMobile}
+            >
+              Entry Form
+            </ActionButton>
+          </NextLink>
+
+          <NextLink href="/login" passHref>
+            <ActionButton
+              variant="outlined"
+              size={isMobile ? "medium" : "large"}
+              sx={{ borderColor: "#1B5E20", color: "#1B5E20" }}
+              fullWidth={isMobile}
+            >
+              Admin
+            </ActionButton>
+          </NextLink>
+        </Stack>
+      </Container>
     </ThemeProvider>
   );
 }
-
-export default Home;

@@ -29,7 +29,7 @@ const generateDate = () => new Date().toLocaleDateString("en-GB");
 
 const ProformaInvoice = ({
     vatNo = "011324A",
-    pinNo = "P0511298820X",
+    pinNo = "P051129820X",
     supplier = "Safaricom PLC",
     logoUrl = "/safaricom-logo1.png",
     companyContact = "Safaricom PLC, Safaricom House, Waiyaki Way, Nairobi, Kenya. Tel: +254 722 003272",
@@ -211,13 +211,13 @@ const ProformaInvoice = ({
                 <Typography variant="h5" align="center" gutterBottom>
                     PROFORMA INVOICE
                 </Typography>
-                <Box sx={{ mb: 2 }}>
+                <Box sx={{ mb: 1, ml:1 }}>
                     <Typography>VAT No: {vatNo}</Typography>
                     <Typography>PIN No: {pinNo}</Typography>
                     <Typography>Date: {date}</Typography>
                     <Typography>Invoice No: {invoiceNo}</Typography>
                 </Box>
-                <Box sx={{ mb: 2 }}>
+                <Box sx={{ mb: 1, ml:1 }}>
                     <Typography variant="subtitle1">Shop Name: {shop}</Typography>
                     <Typography variant="subtitle1">CUSTOMER: {customer}</Typography>
                     <Typography>Contact: {contactname}</Typography>
