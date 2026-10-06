@@ -150,7 +150,9 @@ const SerialsRegistry = () => {
     );
   }, [denominations, formik.values.denomination]);
 
-  const availableSerials = currentDenomData?.serials || [];
+  const availableSerials = useMemo(() => {
+    return currentDenomData?.serials || [];
+  }, [currentDenomData]);
 
   // Filter available serials by user search query
   const filteredSerials = useMemo(() => {
@@ -349,7 +351,7 @@ const SerialsRegistry = () => {
                 >
                   {filteredSerials.length === 0 ? (
                     <Typography variant="body2" color="text.secondary" textAlign="center" py={2}>
-                      No serials match "{serialSearch}"
+                      No serials match &quot;{serialSearch}&quot;
                     </Typography>
                   ) : (
                     <Grid container spacing={1}>

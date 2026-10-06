@@ -260,6 +260,7 @@ const ProformaInvoice = ({
                     <Box sx={{ borderTop: "1px solid #ccc", pt: 2 }}>
                         {logoUrl && (
                             <Box sx={{ textAlign: "center", mb: 1 }}>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={logoUrl} alt="Footer Logo" style={{ maxHeight: "40px", opacity: 0.8 }} />
                             </Box>
                         )}

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -43,7 +43,7 @@ const SerialsTable = () => {
   const [error, setError] = useState("");
   const [accessDenied, setAccessDenied] = useState(false);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError("");
     setAccessDenied(false);
@@ -104,11 +104,11 @@ const SerialsTable = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   // Filtered dataset
   const filteredData = useMemo(() => {
