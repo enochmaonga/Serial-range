@@ -10,10 +10,13 @@ import {
   styled,
   useMediaQuery,
   useTheme,
+  Chip,
 } from "@mui/material";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import NextLink from "next/link";
 import Image from "next/image";
+import { getUser, logout } from "@/utils/auth";
+import { useRouter } from "next/router";
 
 const theme = createTheme({
   palette: {
@@ -35,9 +38,18 @@ const ActionButton = styled(Button)(({ theme }) => ({
   },
 }));
 
+
 export default function Home() {
+  const router = useRouter();
   const muiTheme = useTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down("md"));
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    setCurrentUser(getUser());
+  }, []);
+
+  const isAdmin = currentUser?.isAdmin;
 
   return (
     <ThemeProvider theme={theme}>
@@ -61,6 +73,7 @@ export default function Home() {
             width={300}
             height={60}
             alt="Retail System Logo"
+            priority
           />
         </Box>
         <Typography
@@ -73,12 +86,29 @@ export default function Home() {
 
         <Typography
           variant={isMobile ? "body1" : "h6"}
-          sx={{ color: "text.secondary", mb: 6, px: 2 }}
+          sx={{ color: "text.secondary", mb: 4, px: 2 }}
         >
           Simple. Fast. Reliable Retail Tools for Daily Operations.
         </Typography>
+
+        {isAdmin && (
+          <Box sx={{ mb: 3 }}>
+            <Chip
+              label={`Logged in as Admin (${currentUser.username})`}
+              color="success"
+              variant="outlined"
+              sx={{ fontWeight: 600 }}
+              onDelete={() => {
+                logout(router);
+                setCurrentUser(null);
+              }}
+              deleteIcon={<span style={{ fontSize: 12, fontWeight: 700, marginLeft: 4 }}>Logout</span>}
+            />
+          </Box>
+        )}
+
         <Stack
-          spacing={3}
+          spacing={2.5}
           direction={isMobile ? "column" : "row"}
           sx={{ width: isMobile ? "100%" : "auto" }}
         >
@@ -93,17 +123,6 @@ export default function Home() {
             </ActionButton>
           </NextLink>
 
-          <NextLink href="/seriallist" passHref>
-            <ActionButton
-              variant="outlined"
-              size={isMobile ? "medium" : "large"}
-              sx={{ borderColor: "#107C41", color: "#107C41" }}
-              fullWidth={isMobile}
-            >
-              Audit Reports
-            </ActionButton>
-          </NextLink>
-
           <NextLink href="/invoice-generator" passHref>
             <ActionButton
               variant="outlined"
@@ -115,14 +134,14 @@ export default function Home() {
             </ActionButton>
           </NextLink>
 
-          <NextLink href="/login" passHref>
+          <NextLink href={isAdmin ? "/seriallist" : "/login"} passHref>
             <ActionButton
               variant="outlined"
               size={isMobile ? "medium" : "large"}
               sx={{ borderColor: "#64748B", color: "#475569" }}
               fullWidth={isMobile}
             >
-              Admin
+              {isAdmin ? "Admin Portal (Audit & Reports)" : "Admin Login"}
             </ActionButton>
           </NextLink>
         </Stack>
@@ -130,3 +149,4 @@ export default function Home() {
     </ThemeProvider>
   );
 }
+

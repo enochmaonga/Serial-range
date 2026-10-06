@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   TextField,
   Button,
@@ -9,11 +9,14 @@ import {
   CircularProgress,
   InputAdornment,
   IconButton,
+  Stack,
 } from "@mui/material";
 import { useRouter } from "next/router";
 import Image from "next/image";
+import Link from "next/link";
 import { SERVER_URL } from "@/config";
 import { IoEyeOutline, IoEyeOffOutline, IoLockClosedOutline, IoPersonOutline } from "react-icons/io5";
+import { getUser, logout } from "@/utils/auth";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -21,7 +24,12 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const router = useRouter();
+
+  useEffect(() => {
+    setCurrentUser(getUser());
+  }, []);
 
   const handleLogin = async (e) => {
     if (e) e.preventDefault();
@@ -53,7 +61,7 @@ const Login = () => {
 
         const isAdmin = (data.userType || "").toLowerCase() === "admin";
 
-        // Admin goes to Audit Reports, Regular user goes to Airtime Issuance
+        // Admin goes directly to Audit Reports, Regular user goes to Airtime Issuance
         if (isAdmin) {
           router.push("/seriallist");
         } else {
@@ -96,27 +104,74 @@ const Login = () => {
       >
         {/* Brand Logo & Title */}
         <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mb: 3 }}>
-          <Image
-            src="/safaricom-logo1.png"
-            alt="Safaricom Logo"
-            width={160}
-            height={36}
-            style={{ filter: "brightness(0) invert(1)" }}
-            priority
-          />
+          <Link href="/" passHref style={{ textDecoration: "none" }}>
+            <Image
+              src="/safaricom-logo1.png"
+              alt="Safaricom Logo"
+              width={160}
+              height={36}
+              style={{ filter: "brightness(0) invert(1)", cursor: "pointer" }}
+              priority
+            />
+          </Link>
           <Typography variant="h5" sx={{ fontWeight: 800, mt: 2, color: "#FFFFFF" }}>
-            Sign In to Portal
+            Admin Portal
           </Typography>
           <Typography variant="body2" sx={{ color: "#94A3B8", mt: 0.5, textAlign: "center" }}>
-            Secure portal for serial inventory, issuance & audit reports
+            Sign in with admin credentials to access Audit Reports & serial management
           </Typography>
         </Box>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2.5, borderRadius: 2 }}>
-            {error}
-          </Alert>
-        )}
+        {currentUser?.isAdmin ? (
+          <Box sx={{ mb: 1 }}>
+            <Alert severity="success" sx={{ mb: 2.5, borderRadius: 2 }}>
+              Active session: <strong>{currentUser.username}</strong> (Admin)
+            </Alert>
+            <Stack spacing={2}>
+              <Button
+                variant="contained"
+                fullWidth
+                onClick={() => router.push("/seriallist")}
+                sx={{
+                  py: 1.4,
+                  bgcolor: "#107C41",
+                  fontWeight: 700,
+                  fontSize: "1rem",
+                  borderRadius: 2,
+                  textTransform: "none",
+                  boxShadow: "0 4px 14px rgba(16, 124, 65, 0.4)",
+                  "&:hover": { bgcolor: "#0B532B" },
+                }}
+              >
+                Access Audit Reports
+              </Button>
+              <Button
+                variant="outlined"
+                fullWidth
+                onClick={() => {
+                  logout(router);
+                  setCurrentUser(null);
+                }}
+                sx={{
+                  py: 1.2,
+                  color: "#94A3B8",
+                  borderColor: "#475569",
+                  textTransform: "none",
+                  "&:hover": { borderColor: "#EF4444", color: "#EF4444" },
+                }}
+              >
+                Sign Out / Switch Account
+              </Button>
+            </Stack>
+          </Box>
+        ) : (
+          <>
+            {error && (
+              <Alert severity="error" sx={{ mb: 2.5, borderRadius: 2 }}>
+                {error}
+              </Alert>
+            )}
+
 
         <Box component="form" onSubmit={handleLogin}>
           <TextField
@@ -205,6 +260,8 @@ const Login = () => {
             {loading ? <CircularProgress size={24} sx={{ color: "#FFFFFF" }} /> : "Sign In"}
           </Button>
         </Box>
+      </>
+    )}
       </Paper>
     </Box>
   );

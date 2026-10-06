@@ -62,10 +62,10 @@ const UploadSerials = () => {
       denomination: Yup.string().required("Denomination is required"),
       startSerial: Yup.string()
         .required("Start serial is required")
-        .matches(/^\d{10,20}$/, "Serial must be between 10 and 20 digits"),
+        .matches(/^\d{10,16}$/, "Serial must be numeric and up to 16 digits"),
       endSerial: Yup.string()
         .required("End serial is required")
-        .matches(/^\d{10,20}$/, "Serial must be between 10 and 20 digits"),
+        .matches(/^\d{10,16}$/, "Serial must be numeric and up to 16 digits"),
     }),
     onSubmit: async (values, { resetForm }) => {
       let start, end;
@@ -97,7 +97,7 @@ const UploadSerials = () => {
         return;
       }
 
-      const padLen = Math.max(values.startSerial.length, values.endSerial.length, 17);
+      const padLen = Math.max(values.startSerial.length, values.endSerial.length);
       const generatedSerials = [];
       for (let i = start; i <= end; i++) {
         generatedSerials.push(i.toString().padStart(padLen, "0"));
@@ -335,14 +335,14 @@ const UploadSerials = () => {
                   id="startSerial"
                   name="startSerial"
                   label="Start Serial Number"
-                  placeholder="e.g. 50000000000000001"
+                  placeholder="e.g. 2604130027333680"
                   value={formik.values.startSerial}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   error={Boolean(formik.touched.startSerial && formik.errors.startSerial)}
                   helperText={
                     (formik.touched.startSerial && formik.errors.startSerial) ||
-                    "Enter the first serial in the batch range"
+                    "Enter the first serial in the batch range (up to 16 digits)"
                   }
                   InputProps={{
                     startAdornment: <FaListOl style={{ marginRight: 10, color: "#107C41" }} />,
@@ -354,14 +354,14 @@ const UploadSerials = () => {
                   id="endSerial"
                   name="endSerial"
                   label="End Serial Number"
-                  placeholder="e.g. 50000000000000020"
+                  placeholder="e.g. 2604130027333759"
                   value={formik.values.endSerial}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   error={Boolean(formik.touched.endSerial && formik.errors.endSerial)}
                   helperText={
                     (formik.touched.endSerial && formik.errors.endSerial) ||
-                    "Enter the last serial in the batch range"
+                    "Enter the last serial in the batch range (up to 16 digits)"
                   }
                   InputProps={{
                     startAdornment: <FaListOl style={{ marginRight: 10, color: "#107C41" }} />,

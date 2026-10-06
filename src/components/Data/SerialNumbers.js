@@ -37,23 +37,14 @@ function SerialNumbers() {
 
   const fetchSerialNumbers = async () => {
     const authToken = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-    if (!authToken) {
-      router.push("/login");
-      return;
+    const headers = { "Content-Type": "application/json" };
+    if (authToken) {
+      headers["Authorization"] = `Bearer ${authToken}`;
     }
 
     setLoading(true);
     try {
-      const response = await fetch(`${SERVER_URL}/serial`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-      if (response.status === 401) {
-        router.push("/login");
-        return;
-      }
+      const response = await fetch(`${SERVER_URL}/serial`, { headers });
       if (response.ok) {
         const data = await response.json();
         setDenominations(data.denominations || []);
