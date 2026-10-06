@@ -52,10 +52,12 @@ const CreateUserDialog = ({ open, onClose, onSave }) => {
 
   const createUser = async () => {
     try {
+      const authToken = typeof window !== "undefined" ? localStorage.getItem("token") : null;
       const response = await fetch(`${SERVER_URL}/users`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
         },
         body: JSON.stringify(formData),
       });

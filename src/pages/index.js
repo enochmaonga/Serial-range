@@ -82,25 +82,36 @@ export default function Home() {
           direction={isMobile ? "column" : "row"}
           sx={{ width: isMobile ? "100%" : "auto" }}
         >
+          <NextLink href="/useSerials" passHref>
+            <ActionButton
+              variant="contained"
+              size={isMobile ? "medium" : "large"}
+              sx={{ bgcolor: "#107C41", "&:hover": { bgcolor: "#0B532B" }, color: "#FFFFFF" }}
+              fullWidth={isMobile}
+            >
+              Issue Airtime
+            </ActionButton>
+          </NextLink>
+
+          <NextLink href="/seriallist" passHref>
+            <ActionButton
+              variant="outlined"
+              size={isMobile ? "medium" : "large"}
+              sx={{ borderColor: "#107C41", color: "#107C41" }}
+              fullWidth={isMobile}
+            >
+              Audit Reports
+            </ActionButton>
+          </NextLink>
+
           <NextLink href="/invoice-generator" passHref>
             <ActionButton
               variant="outlined"
               size={isMobile ? "medium" : "large"}
-              sx={{ borderColor: "#1B5E20", color: "#1B5E20" }}
+              sx={{ borderColor: "#107C41", color: "#107C41" }}
               fullWidth={isMobile}
             >
               Proforma Invoice
-            </ActionButton>
-          </NextLink>
-
-          <NextLink href="/useSerials" passHref>
-            <ActionButton
-              variant="outlined"
-              size={isMobile ? "medium" : "large"}
-              sx={{ borderColor: "#1B5E20", color: "#1B5E20" }}
-              fullWidth={isMobile}
-            >
-              Entry Form
             </ActionButton>
           </NextLink>
 
@@ -108,7 +119,7 @@ export default function Home() {
             <ActionButton
               variant="outlined"
               size={isMobile ? "medium" : "large"}
-              sx={{ borderColor: "#1B5E20", color: "#1B5E20" }}
+              sx={{ borderColor: "#64748B", color: "#475569" }}
               fullWidth={isMobile}
             >
               Admin

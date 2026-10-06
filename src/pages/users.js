@@ -65,15 +65,15 @@ function Users() {
     setAnchorEl(null);
   };
 
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-
   useEffect(() => {
     const fetchData = async () => {
+      const authToken = typeof window !== "undefined" ? localStorage.getItem("token") : null;
       try {
-        const response = await fetch(`${backendUrl}/fetchusers`, {
+        const response = await fetch(`${SERVER_URL}/fetchusers`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
+            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
           },
         });
 

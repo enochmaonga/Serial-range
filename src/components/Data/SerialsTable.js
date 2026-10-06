@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -7,289 +7,539 @@ import {
   TableHead,
   TableRow,
   Paper,
-  styled,
   Box,
   Typography,
   Grid,
   Button,
   TablePagination,
   TextField,
-  useMediaQuery,
-  useTheme,
+  Chip,
+  Card,
+  CardContent,
+  Stack,
+  InputAdornment,
+  CircularProgress,
+  Container,
 } from "@mui/material";
 import { v4 as uuidv4 } from "uuid";
 import { SERVER_URL } from "@/config";
 import Image from "next/image";
-import { useRouter } from "next/router";
 import Link from "next/link";
-import Sidebar from "../Dashboard/SideBar";
 import { Parser } from "json2csv";
-
-const BoldTableCell = styled(TableCell)({
-  fontWeight: "bold",
-  backgroundColor: "#1B5E20",
-  wordWrap: "break-word",
-  whiteSpace: "normal",
-  color: "white",
-});
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { useRouter } from "next/router";
+import { IoSearchOutline, IoDownloadOutline, IoAddCircleOutline, IoLockClosedOutline } from "react-icons/io5";
+import { FaMoneyBillWave, FaPhoneAlt, FaSimCard } from "react-icons/fa";
 
 const SerialsTable = () => {
-  const [data, setData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [error, setError] = useState("");
   const router = useRouter();
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDenom, setSelectedDenom] = useState("ALL");
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5); // Rows per page
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [error, setError] = useState("");
+  const [accessDenied, setAccessDenied] = useState(false);
 
-  // const [isAdmin, setIsAdmin] = useState(true);
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+  const fetchData = async () => {
+    setLoading(true);
+    setError("");
+    setAccessDenied(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        console.log("Fetching data from the server...");
-        const authToken = localStorage.getItem("token");
-        if (!authToken) {
-          throw new Error("No authentication token found.");
-        }
-        const response = await fetch(`${backendUrl}/cars`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
-          },
-        });
-        console.log("Server response status:", response.status);
+    const authToken = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const userRole = typeof window !== "undefined" ? localStorage.getItem("userType") : null;
 
-        if (response.status === 200) {
-          const responseData = await response.json();
-          // setIsAdmin(role === 'admin' || "user");
-          console.log("Response data from the server:", responseData);
+    if (!authToken) {
+      router.push("/login");
+      return;
+    }
 
-          if (Array.isArray(responseData)) {
-            if (responseData.length > 0) {
-              const fetchedItems = responseData.map((item) => ({
-                id: uuidv4(),
-                serial: item.serial,
-                denomination: item.denomination,
-                phoneNumber: item.phoneNumber,
-                createdAt: item.createdAt,
-              }));
-              setData(fetchedItems);
-            } else {
-              console.log("No data received from the server");
-            }
-          } else {
-            console.error(
-              "Data from the server is not an array:",
-              responseData.body
-            );
-            setError("Data from the server is not in the expected format");
-          }
-        } else if (response.status === 401) {
-          // Unauthorized access, redirect to login
-          router.push("/login");
-        } else {
-          console.error("Server error:", response.status);
-          setError("Server error. Please tryagain later");
-        }
-      } catch (error) {
-        console.error("Error:", error);
-        setError("An erro occurred while fetching data");
+    if (userRole && userRole.toLowerCase() !== "admin") {
+      setAccessDenied(true);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`,
+      };
+
+      const response = await fetch(`${SERVER_URL}/cars`, {
+        method: "GET",
+        headers,
+      });
+
+      if (response.status === 401) {
+        router.push("/login");
+        return;
       }
-    };
-    fetchData();
-  }, [router]);
+
+      if (response.status === 403) {
+        setAccessDenied(true);
+        return;
+      }
+
+      if (response.ok) {
+        const responseData = await response.json();
+        if (Array.isArray(responseData)) {
+          const fetchedItems = responseData.map((item) => ({
+            id: item._id || uuidv4(),
+            serial: item.serial,
+            denomination: item.denomination,
+            phoneNumber: item.phoneNumber,
+            createdAt: item.createdAt,
+          }));
+          setData(fetchedItems);
+        }
+      } else {
+        setError(`Failed to load data (${response.status})`);
+      }
+    } catch (err) {
+      console.error("Error fetching data:", err);
+      setError("Network error while connecting to server.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    setFilteredData(
-      data.filter((item) =>
-        item.serial?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    );
-    setPage(0);
-  }, [searchQuery, data]);
+    fetchData();
+  }, []);
+
+  // Filtered dataset
+  const filteredData = useMemo(() => {
+    return data.filter((item) => {
+      const matchesSearch =
+        (item.serial && item.serial.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (item.phoneNumber && item.phoneNumber.includes(searchQuery));
+
+      const matchesDenom =
+        selectedDenom === "ALL" || String(item.denomination) === String(selectedDenom);
+
+      return matchesSearch && matchesDenom;
+    });
+  }, [data, searchQuery, selectedDenom]);
+
+  // Unique denominations present in data
+  const denominationsList = useMemo(() => {
+    const denoms = Array.from(new Set(data.map((d) => String(d.denomination)).filter(Boolean)));
+    return denoms.sort((a, b) => Number(a) - Number(b));
+  }, [data]);
+
+  // Aggregate Metrics
+  const totalValue = useMemo(() => {
+    return data.reduce((acc, curr) => acc + (Number(curr.denomination) || 0), 0);
+  }, [data]);
+
+  const uniquePhones = useMemo(() => {
+    return new Set(data.map((d) => d.phoneNumber)).size;
+  }, [data]);
 
   const downloadCSV = () => {
     try {
       const fields = ["denomination", "serial", "phoneNumber", "createdAt"];
-      const opts = {
-        fields,
-        transforms: [
-          (row) => ({
-            ...row,
-            serial: `'${row.serial}`, // Prefix serial numbers with a single quote
-          }),
-        ],
-      };
+      const opts = { fields };
       const parser = new Parser(opts);
-      const csv = parser.parse(data);
+      const csv = parser.parse(filteredData);
+
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "airtime_data.csv");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `issued_serials_${new Date().toISOString().slice(0, 10)}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     } catch (err) {
-      console.error("Error converting data to CSV", err);
+      console.error("CSV Export error:", err);
     }
   };
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
+  const downloadPDF = () => {
+    try {
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text("Issued Airtime Serials Report", 14, 15);
+      doc.setFontSize(10);
+      doc.text(`Generated: ${new Date().toLocaleString()} | Total Records: ${filteredData.length}`, 14, 22);
+
+      const tableData = filteredData.map((row) => [
+        row.denomination ? `Ksh ${row.denomination}` : "-",
+        row.serial || "-",
+        row.phoneNumber || "-",
+        row.createdAt ? new Date(row.createdAt).toLocaleString() : "-",
+      ]);
+
+      autoTable(doc, {
+        head: [["Denomination", "Serial Number", "Phone Number", "Date Issued"]],
+        body: tableData,
+        startY: 28,
+        headStyles: { fillColor: [16, 124, 65] },
+        styles: { fontSize: 8 },
+      });
+
+      doc.save(`issued_serials_${new Date().toISOString().slice(0, 10)}.pdf`);
+    } catch (err) {
+      console.error("PDF Export error:", err);
+    }
   };
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
+
+  if (accessDenied) {
+    return (
+      <Box sx={{ minHeight: "100vh", bgcolor: "#F8FAFC", py: 8 }}>
+        <Container maxWidth="sm">
+          <Card elevation={2} sx={{ p: 4, textAlign: "center", borderRadius: 3, border: "1px solid #E2E8F0" }}>
+            <Box
+              sx={{
+                width: 64,
+                height: 64,
+                borderRadius: "50%",
+                bgcolor: "#FEF2F2",
+                color: "#EF4444",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                mx: "auto",
+                mb: 2,
+              }}
+            >
+              <IoLockClosedOutline size={32} />
+            </Box>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: "#1E293B", mb: 1 }}>
+              Administrator Privileges Required
+            </Typography>
+            <Typography variant="body2" sx={{ color: "#64748B", mb: 3 }}>
+              Audit reports and entered airtime records can only be viewed by administrators. You can issue airtime using the serial issuance screen.
+            </Typography>
+            <Stack direction="row" spacing={2} justifyContent="center">
+              <Button
+                variant="contained"
+                onClick={() => router.push("/useSerials")}
+                sx={{
+                  bgcolor: "#107C41",
+                  textTransform: "none",
+                  fontWeight: 700,
+                  "&:hover": { bgcolor: "#0B532B" },
+                }}
+              >
+                Go to Airtime Issuance
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => router.push("/login")}
+                sx={{ textTransform: "none", fontWeight: 600, color: "#64748B", borderColor: "#CBD5E1" }}
+              >
+                Switch Account
+              </Button>
+            </Stack>
+          </Card>
+        </Container>
+      </Box>
+    );
+  }
 
   return (
-    <>
-      {!isMobile && (
-        <Box
-          style={{
-            backgroundColor: "#EEEEEE",
-            width: "200px",
-            height: "100%",
-            position: "fixed",
-            left: 0,
-            top: 0,
+    <Box sx={{ minHeight: "100vh", bgcolor: "#F8FAFC", py: 4 }}>
+      <Container maxWidth="lg">
+        {/* Top Navigation */}
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ mb: 4 }}
+          flexWrap="wrap"
+          gap={2}
+        >
+          <Link href="/" passHref style={{ textDecoration: "none" }}>
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <Image
+                src="/safaricom-logo1.png"
+                alt="Safaricom Logo"
+                width={160}
+                height={34}
+                priority
+              />
+            </Box>
+          </Link>
+          <Stack direction="row" spacing={1.5}>
+            <Link href="/useSerials" passHref style={{ textDecoration: "none" }}>
+              <Button
+                variant="contained"
+                startIcon={<IoAddCircleOutline />}
+                sx={{ bgcolor: "#107C41", "&:hover": { bgcolor: "#0B532B" } }}
+              >
+                Issue Serial
+              </Button>
+            </Link>
+            <Link href="/upload" passHref style={{ textDecoration: "none" }}>
+              <Button variant="outlined" sx={{ color: "#107C41", borderColor: "#107C41" }}>
+                Upload Serials
+              </Button>
+            </Link>
+          </Stack>
+        </Stack>
+
+        {/* Metric Cards */}
+        <Grid container spacing={2.5} sx={{ mb: 4 }}>
+          <Grid item xs={12} sm={4}>
+            <Card elevation={1} sx={{ borderRadius: 2.5, border: "1px solid #E2E8F0" }}>
+              <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Box
+                  sx={{
+                    bgcolor: "#ECFDF5",
+                    p: 1.5,
+                    borderRadius: 2,
+                    color: "#107C41",
+                    display: "flex",
+                  }}
+                >
+                  <FaSimCard size={28} />
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                    TOTAL SERIALS ISSUED
+                  </Typography>
+                  <Typography variant="h5" fontWeight={800} color="#0F172A">
+                    {data.length}
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} sm={4}>
+            <Card elevation={1} sx={{ borderRadius: 2.5, border: "1px solid #E2E8F0" }}>
+              <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Box
+                  sx={{
+                    bgcolor: "#F0FDF4",
+                    p: 1.5,
+                    borderRadius: 2,
+                    color: "#166534",
+                    display: "flex",
+                  }}
+                >
+                  <FaMoneyBillWave size={28} />
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                    TOTAL AIRTIME VALUE
+                  </Typography>
+                  <Typography variant="h5" fontWeight={800} color="#0F172A">
+                    Ksh {totalValue.toLocaleString()}
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} sm={4}>
+            <Card elevation={1} sx={{ borderRadius: 2.5, border: "1px solid #E2E8F0" }}>
+              <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Box
+                  sx={{
+                    bgcolor: "#F8FAFC",
+                    p: 1.5,
+                    borderRadius: 2,
+                    color: "#475569",
+                    display: "flex",
+                  }}
+                >
+                  <FaPhoneAlt size={28} />
+                </Box>
+                <Box>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                    UNIQUE RECIPIENTS
+                  </Typography>
+                  <Typography variant="h5" fontWeight={800} color="#0F172A">
+                    {uniquePhones}
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+
+        {/* Search, Filters, and Export Toolbar */}
+        <Paper
+          elevation={1}
+          sx={{
+            p: 2.5,
+            mb: 3,
+            borderRadius: 2.5,
+            border: "1px solid #E2E8F0",
           }}
         >
-          {/* Admin content goes here */}
-          <Link href="/dashboard" passHref style={{ textDecoration: "none" }}>
-            <Typography
-              variant="h6"
-              style={{ color: "white", padding: "16px" }}
-            >
-              Admin Panel
-            </Typography>
-          </Link>
-          <Sidebar />
-        </Box>
-      )}
-      <Grid
-        container
-        sx={{
-          textAlign: "center", // Center the form horizontally
-          marginLeft: isMobile ? "15%" : "auto",
-          marginRight: "auto", // Set margin left and right to "auto" for centering
-          maxWidth: isMobile ? "250px" : "40%",
-        }}
-      >
-        <Grid item xs={12} sx={{ mt: 2 }}>
-          <Image
-            src={"/safaricom-logo1.png"}
-            width={300}
-            height={50}
-            alt="Saf Logo"
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <Typography
-            style={{
-              alignContent: "center",
-              textAlign: "center",
-              marginTop: "5px",
-            }}
-            variant="h6"
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            justifyContent="space-between"
+            alignItems={{ xs: "stretch", md: "center" }}
+            spacing={2}
           >
-            Issued Airtime Details
-          </Typography>
-        </Grid>
-      </Grid>
-      <Typography
-        variant="h6"
-        style={{
-          alignContent: "center",
-          textAlign: "center",
-          marginTop: "20px",
-          marginBottom: "20px",
-        }}
-      >
-        Below is the data that has been received.
-      </Typography>
-      <Grid container>
-        <Grid item xs={12} sm={12} md={8}>
-          <TextField
-            label="Phone Number"
-            variant="outlined"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            sx={{
-              marginLeft: isMobile ? "0" : "240px",
-              marginBottom: "20px",
-              width: isMobile ? "100%" : "600px",
-            }}
-          />
-        </Grid>
-        <Grid item xs={12} sm={12} md={4}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={downloadCSV}
-            style={{
-              marginLeft: isMobile ? "0" : "240px",
-              marginBottom: "20px",
-              backgroundColor: "#1B5E20",
-            }}
-          >
-            Download CSV
-          </Button>
-        </Grid>
-      </Grid>
+            {/* Search Input */}
+            <TextField
+              size="small"
+              placeholder="Search by serial or phone number..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              sx={{ minWidth: { md: 320 } }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <IoSearchOutline color="#94A3B8" size={18} />
+                  </InputAdornment>
+                ),
+              }}
+            />
 
-      <TableContainer
-        component={Paper}
-        sx={{
-          textAlign: "center",
-          marginLeft: isMobile ? "0" : "240px",
-          marginRight: "50px",
-          maxWidth: isMobile ? "100%" : "85%",
-        }}
-      >
-        <Table stickyHeader>
-          <TableHead>
-            <TableRow>
-              <BoldTableCell>Denomination</BoldTableCell>
-              <BoldTableCell>Serial Number</BoldTableCell>
-              <BoldTableCell>Phone Number</BoldTableCell>
-              <BoldTableCell>Date</BoldTableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredData
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell>{row.denomination}</TableCell>
-                  <TableCell>{row.serial}</TableCell>
-                  <TableCell>{row.phoneNumber}</TableCell>
-                  <TableCell>{row.createdAt}</TableCell>
-                </TableRow>
+            {/* Denomination Filter Chips */}
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap alignItems="center">
+              <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                FILTER:
+              </Typography>
+              <Chip
+                size="small"
+                label="All"
+                color={selectedDenom === "ALL" ? "success" : "default"}
+                onClick={() => setSelectedDenom("ALL")}
+                sx={{
+                  fontWeight: 600,
+                  bgcolor: selectedDenom === "ALL" ? "#107C41" : undefined,
+                  color: selectedDenom === "ALL" ? "#FFFFFF" : undefined,
+                }}
+              />
+              {denominationsList.map((denom) => (
+                <Chip
+                  key={denom}
+                  size="small"
+                  label={`Ksh ${denom}`}
+                  color={selectedDenom === denom ? "success" : "default"}
+                  onClick={() => setSelectedDenom(denom)}
+                  sx={{
+                    fontWeight: 600,
+                    bgcolor: selectedDenom === denom ? "#107C41" : undefined,
+                    color: selectedDenom === denom ? "#FFFFFF" : undefined,
+                  }}
+                />
               ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-      <TablePagination
-        component="div"
-        count={filteredData.length}
-        page={page}
-        onPageChange={handleChangePage}
-        rowsPerPage={rowsPerPage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-        style={{
-          marginLeft: isMobile ? "0" : "240px",
-          marginRight: "50px",
-          maxWidth: isMobile ? "100%" : "85%",
-        }}
-      />
-    </>
+            </Stack>
+
+            {/* Export Buttons */}
+            <Stack direction="row" spacing={1}>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<IoDownloadOutline />}
+                onClick={downloadCSV}
+                disabled={filteredData.length === 0}
+                sx={{ color: "#107C41", borderColor: "#107C41" }}
+              >
+                CSV
+              </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<IoDownloadOutline />}
+                onClick={downloadPDF}
+                disabled={filteredData.length === 0}
+                sx={{ color: "#107C41", borderColor: "#107C41" }}
+              >
+                PDF
+              </Button>
+            </Stack>
+          </Stack>
+        </Paper>
+
+        {/* Data Table */}
+        <TableContainer
+          component={Paper}
+          elevation={1}
+          sx={{ borderRadius: 2.5, border: "1px solid #E2E8F0", overflow: "hidden" }}
+        >
+          <Table>
+            <TableHead sx={{ bgcolor: "#107C41" }}>
+              <TableRow>
+                <TableCell sx={{ color: "white", fontWeight: 700 }}>#</TableCell>
+                <TableCell sx={{ color: "white", fontWeight: 700 }}>Denomination</TableCell>
+                <TableCell sx={{ color: "white", fontWeight: 700 }}>Serial Number</TableCell>
+                <TableCell sx={{ color: "white", fontWeight: 700 }}>Recipient Phone</TableCell>
+                <TableCell sx={{ color: "white", fontWeight: 700 }}>Date Issued</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
+                    <CircularProgress size={32} sx={{ color: "#107C41" }} />
+                    <Typography variant="body2" sx={{ mt: 1, color: "text.secondary" }}>
+                      Loading issued serials...
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : filteredData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
+                    <Typography variant="body1" fontWeight={600} color="text.secondary">
+                      No serials found matching criteria
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {data.length === 0
+                        ? "No serials have been issued yet. Use the Entry Form to issue airtime."
+                        : "Try adjusting your search or filters."}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredData
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((row, index) => (
+                    <TableRow key={row.id} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
+                      <TableCell sx={{ color: "text.secondary", fontSize: "0.85rem" }}>
+                        {page * rowsPerPage + index + 1}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          label={`Ksh ${row.denomination}`}
+                          sx={{
+                            fontWeight: 700,
+                            bgcolor: "#ECFDF5",
+                            color: "#107C41",
+                            border: "1px solid #BBF7D0",
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell sx={{ fontFamily: "monospace", fontWeight: 600, letterSpacing: 0.5 }}>
+                        {row.serial}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{row.phoneNumber}</TableCell>
+                      <TableCell sx={{ color: "text.secondary", fontSize: "0.85rem" }}>
+                        {row.createdAt ? new Date(row.createdAt).toLocaleString() : "-"}
+                      </TableCell>
+                    </TableRow>
+                  ))
+              )}
+            </TableBody>
+          </Table>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25, 50]}
+            component="div"
+            count={filteredData.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+            onRowsPerPageChange={(e) => {
+              setRowsPerPage(parseInt(e.target.value, 10));
+              setPage(0);
+            }}
+          />
+        </TableContainer>
+      </Container>
+    </Box>
   );
 };
 
