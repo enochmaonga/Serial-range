@@ -427,8 +427,8 @@ const SerialsRegistry = () => {
                 </Tooltip>
               </Stack>
 
-              {initialLoading ? (
-                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              {initialLoading || denominations.length === 0 ? (
+                <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap sx={{ py: 0.5 }}>
                   {[1, 2, 3, 4].map((item) => (
                     <Skeleton
                       key={item}
@@ -438,15 +438,8 @@ const SerialsRegistry = () => {
                       sx={{ borderRadius: 4 }}
                     />
                   ))}
+                  <CircularProgress size={18} sx={{ color: "#107C41" }} />
                 </Stack>
-              ) : denominations.length === 0 ? (
-                <Alert severity="warning" sx={{ borderRadius: 2, py: 0.5 }}>
-                  No serials are currently available in the database. Please{" "}
-                  <Link href="/upload" style={{ color: "#107C41", fontWeight: 700 }}>
-                    upload a batch of serials
-                  </Link>{" "}
-                  to begin issuance.
-                </Alert>
               ) : (
                 <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                   {denominations.map((denom) => {
@@ -481,7 +474,7 @@ const SerialsRegistry = () => {
             </Box>
 
             {/* Step 2: Available Serials Picker */}
-            {initialLoading ? (
+            {initialLoading || denominations.length === 0 ? (
               <Box
                 sx={{
                   mb: 2,

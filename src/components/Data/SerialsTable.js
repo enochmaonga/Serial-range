@@ -159,13 +159,62 @@ const SerialsTable = () => {
     }
   };
 
-  const downloadPDF = () => {
+  const downloadPDF = async () => {
     try {
       const doc = new jsPDF();
-      doc.setFontSize(16);
-      doc.text("Issued Airtime Serials Report", 14, 15);
-      doc.setFontSize(10);
-      doc.text(`Generated: ${new Date().toLocaleString()} | Total Records: ${filteredData.length}`, 14, 22);
+
+      // Load Safaricom logo
+      const img = new window.Image();
+      img.src = "/safaricom-logo1.png";
+      await new Promise((resolve) => {
+        if (img.complete) {
+          resolve();
+        } else {
+          img.onload = () => resolve();
+          img.onerror = () => resolve();
+        }
+      });
+
+      let startY = 15;
+      if (img.complete && img.naturalWidth > 0) {
+        // Logo dimensions: width 48mm, proportional height
+        const logoWidth = 48;
+        const logoHeight = (img.naturalHeight / img.naturalWidth) * logoWidth;
+        doc.addImage(img, "PNG", 14, 10, logoWidth, logoHeight);
+
+        const textStartY = 10 + logoHeight + 7;
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(16, 124, 65); // Safaricom green
+        doc.text("Safaricom Kisii, Customer Delight Airtime Report", 14, textStartY);
+
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(100, 116, 139);
+        doc.text(
+          `Generated: ${new Date().toLocaleString()} | Total Records: ${filteredData.length}`,
+          14,
+          textStartY + 6
+        );
+
+        startY = textStartY + 12;
+      } else {
+        doc.setFontSize(16);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(16, 124, 65);
+        doc.text("Safaricom Kisii, Customer Delight Airtime Report", 14, 15);
+
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(100, 116, 139);
+        doc.text(
+          `Generated: ${new Date().toLocaleString()} | Total Records: ${filteredData.length}`,
+          14,
+          22
+        );
+
+        startY = 28;
+      }
 
       const tableData = filteredData.map((row) => [
         row.denomination ? `Ksh ${row.denomination}` : "-",
@@ -177,12 +226,14 @@ const SerialsTable = () => {
       autoTable(doc, {
         head: [["Denomination", "Serial Number", "Phone Number", "Date Issued"]],
         body: tableData,
-        startY: 28,
+        startY: startY,
         headStyles: { fillColor: [16, 124, 65] },
         styles: { fontSize: 8 },
       });
 
-      doc.save(`issued_serials_${new Date().toISOString().slice(0, 10)}.pdf`);
+      doc.save(
+        `safaricom_issued_serials_${new Date().toISOString().slice(0, 10)}.pdf`
+      );
     } catch (err) {
       console.error("PDF Export error:", err);
     }
@@ -282,6 +333,23 @@ const SerialsTable = () => {
             </Link>
           </Stack>
         </Stack>
+
+        {/* Report Header Title */}
+        <Box sx={{ mb: 3 }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 800,
+              color: "#0F172A",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Safaricom Kisii, Customer Delight Airtime Report
+          </Typography>
+          <Typography variant="body2" sx={{ color: "#64748B", mt: 0.5 }}>
+            Audit log and issuance records of all allocated airtime serials.
+          </Typography>
+        </Box>
 
         {/* Metric Cards */}
         <Grid container spacing={2.5} sx={{ mb: 4 }}>
