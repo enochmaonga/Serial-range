@@ -20,6 +20,7 @@ import {
   Container,
   InputAdornment,
   Grid,
+  Skeleton,
 } from "@mui/material";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -35,8 +36,10 @@ import Link from "next/link";
 import Image from "next/image";
 
 const SerialsRegistry = () => {
+  const [initialLoading, setInitialLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [fetchingStock, setFetchingStock] = useState(false);
+  const [fetchingDenomSerials, setFetchingDenomSerials] = useState(false);
   const [denominations, setDenominations] = useState([]);
   const [selectedSerial, setSelectedSerial] = useState("");
   const [serialSearch, setSerialSearch] = useState("");
@@ -47,7 +50,7 @@ const SerialsRegistry = () => {
   const [dialogError, setDialogError] = useState("");
   const [copied, setCopied] = useState(false);
 
-  // Fetch available denominations and preview serials from the pool
+  // Fetch available denominations overview and preview serials from the pool
   const fetchDenominations = useCallback(async (silent = false) => {
     if (!silent) setFetchingStock(true);
     try {
@@ -66,11 +69,50 @@ const SerialsRegistry = () => {
       console.error("Error fetching available serials:", error);
     } finally {
       if (!silent) setFetchingStock(false);
+      setInitialLoading(false);
     }
   }, []);
 
+  // Fetch live serials on demand for a specific denomination
+  const fetchSerialsForDenomination = useCallback(async (denom, silent = false) => {
+    if (!denom) return;
+    if (!silent) setFetchingDenomSerials(true);
+    try {
+      const authToken = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const headers = { "Content-Type": "application/json" };
+      if (authToken) {
+        headers["Authorization"] = `Bearer ${authToken}`;
+      }
+
+      const res = await fetch(
+        `${SERVER_URL}/serial?denomination=${encodeURIComponent(denom)}&limit=50`,
+        { headers }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setDenominations((prev) =>
+          prev.map((d) => {
+            if (String(d.denomination) === String(denom)) {
+              return {
+                ...d,
+                count: data.total !== undefined ? data.total : d.count,
+                serials: data.serials || [],
+              };
+            }
+            return d;
+          })
+        );
+      }
+    } catch (err) {
+      console.error("Error fetching serials for denomination:", err);
+    } finally {
+      if (!silent) setFetchingDenomSerials(false);
+    }
+  }, []);
+
+  // Initial fetch on component mount
   useEffect(() => {
-    fetchDenominations();
+    fetchDenominations(false);
   }, [fetchDenominations]);
 
   const formik = useFormik({
@@ -157,11 +199,50 @@ const SerialsRegistry = () => {
   });
 
   // Automatically select first denomination if none is selected
+  const { setFieldValue } = formik;
   useEffect(() => {
     if (!formik.values.denomination && denominations.length > 0) {
-      formik.setFieldValue("denomination", String(denominations[0].denomination));
+      setFieldValue("denomination", String(denominations[0].denomination));
     }
-  }, [denominations, formik]);
+  }, [denominations, formik.values.denomination, setFieldValue]);
+
+  // Fetch live serials whenever selected denomination changes
+  useEffect(() => {
+    if (formik.values.denomination && !initialLoading) {
+      fetchSerialsForDenomination(formik.values.denomination, true);
+    }
+  }, [formik.values.denomination, fetchSerialsForDenomination, initialLoading]);
+
+  // Option 1 Real-time Sync: Tab Focus, Visibility Change, and Background Polling
+  useEffect(() => {
+    const handleSync = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        fetchDenominations(true);
+        if (formik.values.denomination && !serialSearch.trim()) {
+          fetchSerialsForDenomination(formik.values.denomination, true);
+        }
+      }
+    };
+
+    window.addEventListener("focus", handleSync);
+    document.addEventListener("visibilitychange", handleSync);
+
+    // Silent background polling every 8 seconds
+    const pollInterval = setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        fetchDenominations(true);
+        if (formik.values.denomination && !serialSearch.trim()) {
+          fetchSerialsForDenomination(formik.values.denomination, true);
+        }
+      }
+    }, 8000);
+
+    return () => {
+      window.removeEventListener("focus", handleSync);
+      document.removeEventListener("visibilitychange", handleSync);
+      clearInterval(pollInterval);
+    };
+  }, [fetchDenominations, fetchSerialsForDenomination, formik.values.denomination, serialSearch]);
 
   // Current denomination data & list of serials
   const currentDenomData = useMemo(() => {
@@ -323,13 +404,21 @@ const SerialsRegistry = () => {
                 <Tooltip title="Refresh stock from database">
                   <IconButton
                     size="small"
-                    onClick={() => fetchDenominations(false)}
-                    disabled={fetchingStock}
+                    onClick={() => {
+                      fetchDenominations(false);
+                      if (formik.values.denomination) {
+                        fetchSerialsForDenomination(formik.values.denomination, false);
+                      }
+                    }}
+                    disabled={fetchingStock || fetchingDenomSerials}
                     sx={{ p: 0.5 }}
                   >
                     <HiArrowPath
                       style={{
-                        animation: fetchingStock ? "spin 1s linear infinite" : "none",
+                        animation:
+                          fetchingStock || fetchingDenomSerials
+                            ? "spin 1s linear infinite"
+                            : "none",
                         color: "#107C41",
                       }}
                       size={16}
@@ -338,7 +427,19 @@ const SerialsRegistry = () => {
                 </Tooltip>
               </Stack>
 
-              {denominations.length === 0 ? (
+              {initialLoading ? (
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                  {[1, 2, 3, 4].map((item) => (
+                    <Skeleton
+                      key={item}
+                      variant="rounded"
+                      width={130}
+                      height={34}
+                      sx={{ borderRadius: 4 }}
+                    />
+                  ))}
+                </Stack>
+              ) : denominations.length === 0 ? (
                 <Alert severity="warning" sx={{ borderRadius: 2, py: 0.5 }}>
                   No serials are currently available in the database. Please{" "}
                   <Link href="/upload" style={{ color: "#107C41", fontWeight: 700 }}>
@@ -380,7 +481,30 @@ const SerialsRegistry = () => {
             </Box>
 
             {/* Step 2: Available Serials Picker */}
-            {currentDenomCount > 0 && (
+            {initialLoading ? (
+              <Box
+                sx={{
+                  mb: 2,
+                  p: 1.5,
+                  bgcolor: "#F8FAFC",
+                  borderRadius: 2,
+                  border: "1px solid #E2E8F0",
+                }}
+              >
+                <Stack direction="row" justifyContent="space-between" sx={{ mb: 1.5 }}>
+                  <Skeleton variant="text" width={220} height={20} />
+                  <Skeleton variant="text" width={110} height={20} />
+                </Stack>
+                <Skeleton variant="rounded" width="100%" height={38} sx={{ mb: 1, borderRadius: 1 }} />
+                <Grid container spacing={0.8}>
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <Grid item xs={12} sm={6} md={4} key={i}>
+                      <Skeleton variant="rounded" width="100%" height={34} sx={{ borderRadius: 1.5 }} />
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+            ) : currentDenomCount > 0 ? (
               <Box
                 sx={{
                   mb: 2,
@@ -401,10 +525,18 @@ const SerialsRegistry = () => {
                   <Typography variant="caption" fontWeight={700} color="#475569" letterSpacing={0.5}>
                     2. SELECT SERIAL NUMBER (KSH {formik.values.denomination})
                   </Typography>
-                  <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
-                    {searchingServer
-                      ? "Searching database..."
-                      : `Showing ${displayedSerials.length} of ${currentDenomCount.toLocaleString()} available`}
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "#64748B", fontWeight: 600, display: "flex", alignItems: "center" }}
+                  >
+                    {searchingServer || fetchingDenomSerials ? (
+                      <>
+                        <CircularProgress size={12} sx={{ color: "#107C41", mr: 0.8 }} />
+                        {searchingServer ? "Searching database..." : "Refreshing serials..."}
+                      </>
+                    ) : (
+                      `Showing ${displayedSerials.length} of ${currentDenomCount.toLocaleString()} available`
+                    )}
                   </Typography>
                 </Stack>
 
@@ -542,7 +674,7 @@ const SerialsRegistry = () => {
                   )}
                 </Box>
               </Box>
-            )}
+            ) : null}
 
             {/* Step 3: Recipient Form - Compact Side-by-side layout */}
             <form onSubmit={formik.handleSubmit}>
