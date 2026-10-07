@@ -42,6 +42,7 @@ import {
   FaCheck,
   FaTimes,
   FaFileInvoice,
+  FaHome,
 } from "react-icons/fa";
 import { HiArrowPath } from "react-icons/hi2";
 
@@ -375,6 +376,24 @@ const ProformaInvoice = ({
             </Box>
           </Link>
           <Stack direction="row" spacing={1} alignItems="center">
+            <Link href="/" passHref style={{ textDecoration: "none" }}>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<FaHome size={13} />}
+                sx={{
+                  color: "#0F172A",
+                  borderColor: "#CBD5E1",
+                  textTransform: "none",
+                  fontWeight: 600,
+                  py: 0.4,
+                  fontSize: "0.8rem",
+                  "&:hover": { borderColor: "#107C41", color: "#107C41" },
+                }}
+              >
+                Home
+              </Button>
+            </Link>
             <Button
               variant="outlined"
               size="small"

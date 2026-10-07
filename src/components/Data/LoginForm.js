@@ -15,8 +15,14 @@ import { useRouter } from "next/router";
 import Image from "next/image";
 import Link from "next/link";
 import { SERVER_URL } from "@/config";
-import { IoEyeOutline, IoEyeOffOutline, IoLockClosedOutline, IoPersonOutline } from "react-icons/io5";
-import { getUser, logout } from "@/utils/auth";
+import {
+  IoEyeOutline,
+  IoEyeOffOutline,
+  IoLockClosedOutline,
+  IoPersonOutline,
+  IoHomeOutline,
+} from "react-icons/io5";
+import { getUser, logout, setAuthSession } from "@/utils/auth";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -53,15 +59,14 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok && data.token) {
-        // Persist session in localStorage
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("username", data.username);
-        localStorage.setItem("userType", data.userType || "user");
-        if (data.userId) localStorage.setItem("userId", data.userId);
+        setAuthSession({
+          token: data.token,
+          username: data.username,
+          userType: data.userType || "user",
+          userId: data.userId,
+        });
 
         const isAdmin = (data.userType || "").toLowerCase() === "admin";
-
-        // Admin goes directly to Audit Reports, Regular user goes to Airtime Issuance
         if (isAdmin) {
           router.push("/seriallist");
         } else {
@@ -87,7 +92,8 @@ const Login = () => {
         alignItems: "center",
         justifyContent: "center",
         px: 2,
-        backgroundImage: "radial-gradient(at 0% 0%, rgba(16, 124, 65, 0.15) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(30, 41, 59, 0.8) 0px, transparent 50%)",
+        backgroundImage:
+          "radial-gradient(at 0% 0%, rgba(16, 124, 65, 0.15) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(30, 41, 59, 0.8) 0px, transparent 50%)",
       }}
     >
       <Paper
@@ -102,6 +108,25 @@ const Login = () => {
           border: "1px solid #334155",
         }}
       >
+        {/* Navigation Bar / Back to Home */}
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+          <Link href="/" passHref style={{ textDecoration: "none" }}>
+            <Button
+              startIcon={<IoHomeOutline size={16} />}
+              size="small"
+              sx={{
+                color: "#94A3B8",
+                textTransform: "none",
+                fontWeight: 600,
+                fontSize: "0.85rem",
+                "&:hover": { color: "#FFFFFF", bgcolor: "rgba(255, 255, 255, 0.05)" },
+              }}
+            >
+              Home
+            </Button>
+          </Link>
+        </Box>
+
         {/* Brand Logo & Title */}
         <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mb: 3 }}>
           <Link href="/" passHref style={{ textDecoration: "none" }}>
@@ -122,56 +147,40 @@ const Login = () => {
           </Typography>
         </Box>
 
-        {currentUser?.isAdmin ? (
-          <Box sx={{ mb: 1 }}>
-            <Alert severity="success" sx={{ mb: 2.5, borderRadius: 2 }}>
-              Active session: <strong>{currentUser.username}</strong> (Admin)
-            </Alert>
-            <Stack spacing={2}>
+        {currentUser && (
+          <Alert
+            severity="info"
+            sx={{
+              mb: 2.5,
+              borderRadius: 2,
+              bgcolor: "rgba(16, 124, 65, 0.15)",
+              color: "#E2E8F0",
+              border: "1px solid rgba(16, 124, 65, 0.4)",
+              "& .MuiAlert-icon": { color: "#107C41" },
+            }}
+            action={
               <Button
-                variant="contained"
-                fullWidth
-                onClick={() => router.push("/seriallist")}
-                sx={{
-                  py: 1.4,
-                  bgcolor: "#107C41",
-                  fontWeight: 700,
-                  fontSize: "1rem",
-                  borderRadius: 2,
-                  textTransform: "none",
-                  boxShadow: "0 4px 14px rgba(16, 124, 65, 0.4)",
-                  "&:hover": { bgcolor: "#0B532B" },
-                }}
-              >
-                Access Audit Reports
-              </Button>
-              <Button
-                variant="outlined"
-                fullWidth
+                color="inherit"
+                size="small"
                 onClick={() => {
-                  logout(router);
+                  logout();
                   setCurrentUser(null);
                 }}
-                sx={{
-                  py: 1.2,
-                  color: "#94A3B8",
-                  borderColor: "#475569",
-                  textTransform: "none",
-                  "&:hover": { borderColor: "#EF4444", color: "#EF4444" },
-                }}
+                sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.75rem" }}
               >
-                Sign Out / Switch Account
+                Sign Out
               </Button>
-            </Stack>
-          </Box>
-        ) : (
-          <>
-            {error && (
-              <Alert severity="error" sx={{ mb: 2.5, borderRadius: 2 }}>
-                {error}
-              </Alert>
-            )}
+            }
+          >
+            Signed in as <strong>{currentUser.username}</strong>
+          </Alert>
+        )}
 
+        {error && (
+          <Alert severity="error" sx={{ mb: 2.5, borderRadius: 2 }}>
+            {error}
+          </Alert>
+        )}
 
         <Box component="form" onSubmit={handleLogin}>
           <TextField
@@ -260,8 +269,6 @@ const Login = () => {
             {loading ? <CircularProgress size={24} sx={{ color: "#FFFFFF" }} /> : "Sign In"}
           </Button>
         </Box>
-      </>
-    )}
       </Paper>
     </Box>
   );

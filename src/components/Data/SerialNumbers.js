@@ -25,7 +25,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { IoSearchOutline } from "react-icons/io5";
-import { FaSimCard, FaBoxes } from "react-icons/fa";
+import { FaSimCard, FaBoxes, FaHome } from "react-icons/fa";
 import { HiArrowPath } from "react-icons/hi2";
 
 function SerialNumbers() {
@@ -101,6 +101,21 @@ function SerialNumbers() {
             </Box>
           </Link>
           <Stack direction="row" spacing={1.5} alignItems="center">
+            <Link href="/" passHref style={{ textDecoration: "none" }}>
+              <Button
+                variant="outlined"
+                startIcon={<FaHome size={15} />}
+                sx={{
+                  color: "#0F172A",
+                  borderColor: "#CBD5E1",
+                  textTransform: "none",
+                  fontWeight: 600,
+                  "&:hover": { borderColor: "#107C41", color: "#107C41" },
+                }}
+              >
+                Home
+              </Button>
+            </Link>
             <Button
               variant="outlined"
               onClick={fetchSerialNumbers}

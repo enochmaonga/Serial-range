@@ -31,7 +31,8 @@ import {
   HiClipboardDocumentCheck,
   HiMagnifyingGlass,
 } from "react-icons/hi2";
-import { FaSimCard, FaPhoneAlt, FaCheck } from "react-icons/fa";
+import { FaSimCard, FaPhoneAlt, FaCheck, FaHome } from "react-icons/fa";
+import { getToken } from "@/utils/auth";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -349,7 +350,23 @@ const SerialsRegistry = () => {
               />
             </Box>
           </Link>
-          <Stack direction="row" spacing={1.5}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Link href="/" passHref style={{ textDecoration: "none" }}>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<FaHome size={13} />}
+                sx={{
+                  color: "#0F172A",
+                  borderColor: "#CBD5E1",
+                  textTransform: "none",
+                  fontWeight: 600,
+                  "&:hover": { borderColor: "#107C41", color: "#107C41" },
+                }}
+              >
+                Home
+              </Button>
+            </Link>
             <Link href="/getserials" passHref style={{ textDecoration: "none" }}>
               <Button variant="outlined" size="small" sx={{ color: "#107C41", borderColor: "#107C41" }}>
                 Stock Inventory

@@ -24,7 +24,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { SERVER_URL } from "@/config";
 import { HiCheckCircle, HiArrowUpTray } from "react-icons/hi2";
-import { FaMoneyBillWave, FaListOl } from "react-icons/fa";
+import { FaMoneyBillWave, FaListOl, FaHome } from "react-icons/fa";
 import { IoLockClosedOutline } from "react-icons/io5";
 
 const QUICK_DENOMINATIONS = ["20", "50", "100", "200", "500", "1000"];
@@ -245,7 +245,23 @@ const UploadSerials = () => {
               />
             </Box>
           </Link>
-          <Stack direction="row" spacing={1.5}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Link href="/" passHref style={{ textDecoration: "none" }}>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<FaHome size={13} />}
+                sx={{
+                  color: "#0F172A",
+                  borderColor: "#CBD5E1",
+                  textTransform: "none",
+                  fontWeight: 600,
+                  "&:hover": { borderColor: "#107C41", color: "#107C41" },
+                }}
+              >
+                Home
+              </Button>
+            </Link>
             <Link href="/useSerials" passHref style={{ textDecoration: "none" }}>
               <Button variant="outlined" size="small" sx={{ color: "#107C41", borderColor: "#107C41" }}>
                 Issue Airtime

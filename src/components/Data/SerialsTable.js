@@ -30,7 +30,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useRouter } from "next/router";
 import { IoSearchOutline, IoDownloadOutline, IoAddCircleOutline, IoLockClosedOutline } from "react-icons/io5";
-import { FaMoneyBillWave, FaPhoneAlt, FaSimCard } from "react-icons/fa";
+import { FaMoneyBillWave, FaPhoneAlt, FaSimCard, FaHome } from "react-icons/fa";
 
 const SerialsTable = () => {
   const router = useRouter();
@@ -316,18 +316,33 @@ const SerialsTable = () => {
               />
             </Box>
           </Link>
-          <Stack direction="row" spacing={1.5}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Link href="/" passHref style={{ textDecoration: "none" }}>
+              <Button
+                variant="outlined"
+                startIcon={<FaHome size={15} />}
+                sx={{
+                  color: "#0F172A",
+                  borderColor: "#CBD5E1",
+                  textTransform: "none",
+                  fontWeight: 600,
+                  "&:hover": { borderColor: "#107C41", color: "#107C41" },
+                }}
+              >
+                Home
+              </Button>
+            </Link>
             <Link href="/useSerials" passHref style={{ textDecoration: "none" }}>
               <Button
                 variant="contained"
                 startIcon={<IoAddCircleOutline />}
-                sx={{ bgcolor: "#107C41", "&:hover": { bgcolor: "#0B532B" } }}
+                sx={{ bgcolor: "#107C41", "&:hover": { bgcolor: "#0B532B" }, textTransform: "none" }}
               >
                 Issue Serial
               </Button>
             </Link>
             <Link href="/upload" passHref style={{ textDecoration: "none" }}>
-              <Button variant="outlined" sx={{ color: "#107C41", borderColor: "#107C41" }}>
+              <Button variant="outlined" sx={{ color: "#107C41", borderColor: "#107C41", textTransform: "none" }}>
                 Upload Serials
               </Button>
             </Link>
