@@ -26,6 +26,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { IoSearchOutline } from "react-icons/io5";
 import { FaSimCard, FaBoxes } from "react-icons/fa";
+import { HiArrowPath } from "react-icons/hi2";
 
 function SerialNumbers() {
   const router = useRouter();
@@ -62,7 +63,7 @@ function SerialNumbers() {
 
   // Total serials count across all denominations
   const totalStockCount = useMemo(() => {
-    return denominations.reduce((acc, d) => acc + (d.serials?.length || 0), 0);
+    return denominations.reduce((acc, d) => acc + (d.count !== undefined ? d.count : (d.serials?.length || 0)), 0);
   }, [denominations]);
 
   // Filtered denominations
@@ -99,7 +100,22 @@ function SerialNumbers() {
               />
             </Box>
           </Link>
-          <Stack direction="row" spacing={1.5}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Button
+              variant="outlined"
+              onClick={fetchSerialNumbers}
+              disabled={loading}
+              startIcon={<HiArrowPath style={{ animation: loading ? "spin 1s linear infinite" : "none" }} />}
+              sx={{
+                color: "#107C41",
+                borderColor: "#107C41",
+                textTransform: "none",
+                fontWeight: 600,
+                "&:hover": { borderColor: "#0B532B", bgcolor: "rgba(16, 124, 65, 0.04)" },
+              }}
+            >
+              Refresh Stock
+            </Button>
             <Link href="/useSerials" passHref style={{ textDecoration: "none" }}>
               <Button variant="contained" sx={{ bgcolor: "#107C41", "&:hover": { bgcolor: "#0B532B" } }}>
                 Issue Airtime
@@ -237,7 +253,7 @@ function SerialNumbers() {
                         />
                       </TableCell>
                       <TableCell sx={{ fontWeight: 700, fontSize: "1rem" }}>
-                        {row.serials?.length || 0}
+                        {(row.count !== undefined ? row.count : (row.serials?.length || 0)).toLocaleString()}
                       </TableCell>
                       <TableCell>
                         <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap sx={{ maxHeight: 120, overflowY: "auto" }}>
@@ -253,9 +269,9 @@ function SerialNumbers() {
                               }}
                             />
                           ))}
-                          {row.serials?.length > 15 && (
+                          {(row.count !== undefined ? row.count : (row.serials?.length || 0)) > 15 && (
                             <Typography variant="caption" sx={{ alignSelf: "center", color: "text.secondary" }}>
-                              +{row.serials.length - 15} more
+                              +{((row.count !== undefined ? row.count : row.serials.length) - Math.min(row.serials?.length || 0, 15)).toLocaleString()} more
                             </Typography>
                           )}
                         </Stack>

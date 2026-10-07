@@ -30,7 +30,7 @@ import {
   HiClipboardDocumentCheck,
   HiMagnifyingGlass,
 } from "react-icons/hi2";
-import { FaSimCard, FaPhoneAlt, FaMoneyBillWave, FaCheck } from "react-icons/fa";
+import { FaSimCard, FaPhoneAlt, FaCheck } from "react-icons/fa";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -40,14 +40,16 @@ const SerialsRegistry = () => {
   const [denominations, setDenominations] = useState([]);
   const [selectedSerial, setSelectedSerial] = useState("");
   const [serialSearch, setSerialSearch] = useState("");
+  const [serverSearchResults, setServerSearchResults] = useState(null);
+  const [searchingServer, setSearchingServer] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [assignedResult, setAssignedResult] = useState(null);
   const [dialogError, setDialogError] = useState("");
   const [copied, setCopied] = useState(false);
 
-  // Fetch available denominations and their serials from the pool
-  const fetchDenominations = useCallback(async () => {
-    setFetchingStock(true);
+  // Fetch available denominations and preview serials from the pool
+  const fetchDenominations = useCallback(async (silent = false) => {
+    if (!silent) setFetchingStock(true);
     try {
       const authToken = typeof window !== "undefined" ? localStorage.getItem("token") : null;
       const headers = { "Content-Type": "application/json" };
@@ -63,7 +65,7 @@ const SerialsRegistry = () => {
     } catch (error) {
       console.error("Error fetching available serials:", error);
     } finally {
-      setFetchingStock(false);
+      if (!silent) setFetchingStock(false);
     }
   }, []);
 
@@ -116,12 +118,30 @@ const SerialsRegistry = () => {
         const result = await response.json();
 
         if (response.ok && result.success) {
+          const issuedSerial = result.data?.serial || selectedSerial;
+          const issuedDenom = values.denomination;
+
+          // Optimistically knock out serial and decrement count immediately
+          setDenominations((prevDenoms) =>
+            prevDenoms.map((d) => {
+              if (String(d.denomination) === String(issuedDenom)) {
+                return {
+                  ...d,
+                  count: Math.max(0, (d.count !== undefined ? d.count : (d.serials?.length || 0)) - 1),
+                  serials: (d.serials || []).filter((s) => s !== issuedSerial),
+                };
+              }
+              return d;
+            })
+          );
+
           setAssignedResult(result.data);
           resetForm();
           setSelectedSerial("");
-          // Knock out serial in real time by refreshing inventory from server
-          await fetchDenominations();
           setDialogOpen(true);
+
+          // Silent background sync
+          fetchDenominations(true);
         } else {
           setDialogError(result.message || "Failed to assign serial.");
           setDialogOpen(true);
@@ -150,11 +170,17 @@ const SerialsRegistry = () => {
     );
   }, [denominations, formik.values.denomination]);
 
+  const currentDenomCount = useMemo(() => {
+    return currentDenomData?.count !== undefined
+      ? currentDenomData.count
+      : (currentDenomData?.serials?.length || 0);
+  }, [currentDenomData]);
+
   const availableSerials = useMemo(() => {
     return currentDenomData?.serials || [];
   }, [currentDenomData]);
 
-  // Filter available serials by user search query
+  // Filter available preview serials locally
   const filteredSerials = useMemo(() => {
     if (!serialSearch.trim()) return availableSerials;
     return availableSerials.filter((s) =>
@@ -162,12 +188,54 @@ const SerialsRegistry = () => {
     );
   }, [availableSerials, serialSearch]);
 
+  // Deep search query to server if user searches a specific pattern (3+ characters)
+  useEffect(() => {
+    const query = serialSearch.trim();
+    if (query.length < 3 || !formik.values.denomination) {
+      setServerSearchResults(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setSearchingServer(true);
+      try {
+        const authToken = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+        const res = await fetch(
+          `${SERVER_URL}/serial?denomination=${encodeURIComponent(
+            formik.values.denomination
+          )}&search=${encodeURIComponent(query)}&limit=50`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+            },
+          }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setServerSearchResults(data.serials || []);
+        }
+      } catch (err) {
+        console.error("Search serial error:", err);
+      } finally {
+        setSearchingServer(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [serialSearch, formik.values.denomination]);
+
+  const displayedSerials = useMemo(() => {
+    if (serverSearchResults !== null) return serverSearchResults;
+    return filteredSerials;
+  }, [serverSearchResults, filteredSerials]);
+
   // Reset selected serial if user switches denomination and serial doesn't belong
   useEffect(() => {
-    if (selectedSerial && !availableSerials.includes(selectedSerial)) {
+    if (selectedSerial && !displayedSerials.includes(selectedSerial)) {
       setSelectedSerial("");
     }
-  }, [formik.values.denomination, availableSerials, selectedSerial]);
+  }, [formik.values.denomination, displayedSerials, selectedSerial]);
 
   const handleCopySerial = () => {
     if (assignedResult?.serial) {
@@ -178,24 +246,24 @@ const SerialsRegistry = () => {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#F8FAFC", py: 5 }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "#F8FAFC", py: { xs: 2, md: 3 } }}>
       <Container maxWidth="md">
         {/* Header Navigation */}
         <Stack
           direction="row"
           justifyContent="space-between"
           alignItems="center"
-          sx={{ mb: 4 }}
+          sx={{ mb: 2 }}
           flexWrap="wrap"
-          gap={2}
+          gap={1.5}
         >
           <Link href="/" passHref style={{ textDecoration: "none" }}>
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <Image
                 src="/safaricom-logo1.png"
                 alt="Safaricom Logo"
-                width={160}
-                height={34}
+                width={150}
+                height={32}
                 priority
               />
             </Box>
@@ -216,9 +284,9 @@ const SerialsRegistry = () => {
 
         {/* Main Issuance Card */}
         <Card
-          elevation={3}
+          elevation={2}
           sx={{
-            borderRadius: 3,
+            borderRadius: 2.5,
             overflow: "hidden",
             border: "1px solid #E2E8F0",
             bgcolor: "#FFFFFF",
@@ -228,48 +296,50 @@ const SerialsRegistry = () => {
             sx={{
               background: "linear-gradient(135deg, #107C41 0%, #0B532B 100%)",
               color: "white",
-              px: 4,
-              py: 3,
+              px: { xs: 2.5, md: 3 },
+              py: 1.5,
             }}
           >
-            <Typography variant="h5" fontWeight={700}>
+            <Typography variant="h6" fontWeight={700} sx={{ fontSize: "1.1rem" }}>
               Airtime Serial Issuance
             </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>
-              Browse and select an available serial number from the list to issue directly to a recipient.
+            <Typography variant="caption" sx={{ opacity: 0.9, display: "block" }}>
+              Select an available serial number below and enter the customer number.
             </Typography>
           </Box>
 
-          <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+          <CardContent sx={{ p: { xs: 2, md: 2.5 }, "&:last-child": { pb: 2.5 } }}>
             {/* Step 1: Available Denominations Stock */}
-            <Box sx={{ mb: 3.5 }}>
+            <Box sx={{ mb: 2 }}>
               <Stack
                 direction="row"
                 justifyContent="space-between"
                 alignItems="center"
-                sx={{ mb: 1.5 }}
+                sx={{ mb: 1 }}
               >
-                <Typography variant="subtitle2" fontWeight={700} color="#334155">
+                <Typography variant="caption" fontWeight={700} color="#475569" letterSpacing={0.5}>
                   1. SELECT DENOMINATION
                 </Typography>
-                <Tooltip title="Refresh available stock from database">
+                <Tooltip title="Refresh stock from database">
                   <IconButton
                     size="small"
-                    onClick={fetchDenominations}
+                    onClick={() => fetchDenominations(false)}
                     disabled={fetchingStock}
+                    sx={{ p: 0.5 }}
                   >
                     <HiArrowPath
                       style={{
                         animation: fetchingStock ? "spin 1s linear infinite" : "none",
                         color: "#107C41",
                       }}
+                      size={16}
                     />
                   </IconButton>
                 </Tooltip>
               </Stack>
 
               {denominations.length === 0 ? (
-                <Alert severity="warning" sx={{ borderRadius: 2 }}>
+                <Alert severity="warning" sx={{ borderRadius: 2, py: 0.5 }}>
                   No serials are currently available in the database. Please{" "}
                   <Link href="/upload" style={{ color: "#107C41", fontWeight: 700 }}>
                     upload a batch of serials
@@ -277,14 +347,14 @@ const SerialsRegistry = () => {
                   to begin issuance.
                 </Alert>
               ) : (
-                <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                   {denominations.map((denom) => {
-                    const count = denom.serials?.length || 0;
+                    const count = denom.count !== undefined ? denom.count : (denom.serials?.length || 0);
                     const isSelected = String(formik.values.denomination) === String(denom.denomination);
                     return (
                       <Chip
                         key={denom.denomination}
-                        label={`Ksh ${denom.denomination} (${count} in stock)`}
+                        label={`Ksh ${denom.denomination} (${count.toLocaleString()} in stock)`}
                         color={isSelected ? "success" : "default"}
                         variant={isSelected ? "filled" : "outlined"}
                         onClick={() => {
@@ -293,14 +363,14 @@ const SerialsRegistry = () => {
                         }}
                         sx={{
                           fontWeight: 700,
-                          fontSize: "0.85rem",
-                          py: 2.2,
+                          fontSize: "0.8rem",
+                          py: 1.2,
                           px: 0.5,
                           cursor: "pointer",
                           borderColor: isSelected ? "#107C41" : "#CBD5E1",
                           bgcolor: isSelected ? "#107C41" : "#F8FAFC",
                           color: isSelected ? "#FFFFFF" : "#1E293B",
-                          boxShadow: isSelected ? "0 4px 10px rgba(16, 124, 65, 0.25)" : "none",
+                          boxShadow: isSelected ? "0 2px 8px rgba(16, 124, 65, 0.25)" : "none",
                         }}
                       />
                     );
@@ -310,14 +380,31 @@ const SerialsRegistry = () => {
             </Box>
 
             {/* Step 2: Available Serials Picker */}
-            {availableSerials.length > 0 && (
-              <Box sx={{ mb: 3.5, p: 2.5, bgcolor: "#F8FAFC", borderRadius: 2.5, border: "1px solid #E2E8F0" }}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }} flexWrap="wrap" gap={1}>
-                  <Typography variant="subtitle2" fontWeight={700} color="#334155">
+            {currentDenomCount > 0 && (
+              <Box
+                sx={{
+                  mb: 2,
+                  p: 1.5,
+                  bgcolor: "#F8FAFC",
+                  borderRadius: 2,
+                  border: "1px solid #E2E8F0",
+                }}
+              >
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  sx={{ mb: 1 }}
+                  flexWrap="wrap"
+                  gap={1}
+                >
+                  <Typography variant="caption" fontWeight={700} color="#475569" letterSpacing={0.5}>
                     2. SELECT SERIAL NUMBER (KSH {formik.values.denomination})
                   </Typography>
                   <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 600 }}>
-                    Showing {filteredSerials.length} of {availableSerials.length} available
+                    {searchingServer
+                      ? "Searching database..."
+                      : `Showing ${displayedSerials.length} of ${currentDenomCount.toLocaleString()} available`}
                   </Typography>
                 </Stack>
 
@@ -325,51 +412,62 @@ const SerialsRegistry = () => {
                 <TextField
                   size="small"
                   fullWidth
-                  placeholder="Search available serial numbers..."
+                  placeholder="Filter or search serial numbers..."
                   value={serialSearch}
                   onChange={(e) => setSerialSearch(e.target.value)}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <HiMagnifyingGlass color="#94A3B8" />
+                        <HiMagnifyingGlass color="#94A3B8" size={16} />
                       </InputAdornment>
                     ),
+                    endAdornment: searchingServer ? (
+                      <InputAdornment position="end">
+                        <CircularProgress size={14} sx={{ color: "#107C41" }} />
+                      </InputAdornment>
+                    ) : null,
                   }}
-                  sx={{ mb: 2, bgcolor: "#FFFFFF", borderRadius: 1 }}
+                  sx={{
+                    mb: 1,
+                    bgcolor: "#FFFFFF",
+                    borderRadius: 1,
+                    "& .MuiInputBase-input": { py: 0.7, fontSize: "0.85rem" },
+                  }}
                 />
 
-                {/* Serials Scrollable Grid */}
+                {/* Serials Scrollable Grid - compact maxHeight */}
                 <Box
                   sx={{
-                    maxHeight: 230,
+                    maxHeight: 130,
                     overflowY: "auto",
-                    p: 1.5,
+                    p: 1,
                     bgcolor: "#FFFFFF",
-                    borderRadius: 2,
+                    borderRadius: 1.5,
                     border: "1px solid #E2E8F0",
                   }}
                 >
-                  {filteredSerials.length === 0 ? (
-                    <Typography variant="body2" color="text.secondary" textAlign="center" py={2}>
-                      No serials match &quot;{serialSearch}&quot;
+                  {displayedSerials.length === 0 ? (
+                    <Typography variant="body2" color="text.secondary" textAlign="center" py={1.5}>
+                      {serialSearch ? `No serials match "${serialSearch}"` : "No serials available in preview"}
                     </Typography>
                   ) : (
-                    <Grid container spacing={1}>
-                      {filteredSerials.map((s) => {
+                    <Grid container spacing={0.8}>
+                      {displayedSerials.map((s) => {
                         const isPicked = selectedSerial === s;
                         return (
-                          <Grid item xs={12} sm={6} key={s}>
+                          <Grid item xs={12} sm={6} md={4} key={s}>
                             <Box
                               onClick={() => setSelectedSerial(s)}
                               sx={{
-                                p: 1.2,
+                                p: 0.75,
+                                px: 1,
                                 borderRadius: 1.5,
                                 cursor: "pointer",
                                 border: `1.5px solid ${isPicked ? "#107C41" : "#E2E8F0"}`,
                                 bgcolor: isPicked ? "#ECFDF5" : "#FFFFFF",
                                 color: isPicked ? "#0B532B" : "#1E293B",
                                 fontFamily: "monospace",
-                                fontSize: "0.85rem",
+                                fontSize: "0.8rem",
                                 fontWeight: isPicked ? 700 : 500,
                                 display: "flex",
                                 alignItems: "center",
@@ -385,19 +483,20 @@ const SerialsRegistry = () => {
                               {isPicked ? (
                                 <Chip
                                   size="small"
-                                  icon={<FaCheck size={10} style={{ color: "#FFFFFF" }} />}
+                                  icon={<FaCheck size={9} style={{ color: "#FFFFFF" }} />}
                                   label="Selected"
                                   sx={{
-                                    height: 20,
-                                    fontSize: "0.7rem",
+                                    height: 18,
+                                    fontSize: "0.65rem",
                                     fontWeight: 700,
                                     bgcolor: "#107C41",
                                     color: "#FFFFFF",
+                                    "& .MuiChip-label": { px: 0.5 },
                                   }}
                                 />
                               ) : (
-                                <Typography variant="caption" sx={{ color: "#94A3B8" }}>
-                                  Click to pick
+                                <Typography variant="caption" sx={{ color: "#94A3B8", fontSize: "0.7rem" }}>
+                                  Pick
                                 </Typography>
                               )}
                             </Box>
@@ -409,12 +508,26 @@ const SerialsRegistry = () => {
                 </Box>
 
                 {/* Selected Indicator */}
-                <Box sx={{ mt: 1.5, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1 }}>
-                  <Typography variant="body2" sx={{ color: selectedSerial ? "#107C41" : "#D97706", fontWeight: 700 }}>
+                <Box
+                  sx={{
+                    mt: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    flexWrap: "wrap",
+                    gap: 1,
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{ color: selectedSerial ? "#107C41" : "#D97706", fontWeight: 700 }}
+                  >
                     {selectedSerial ? (
-                      <>✓ Picked Serial: <strong style={{ letterSpacing: 0.5 }}>{selectedSerial}</strong> (will be knocked out)</>
+                      <>
+                        ✓ Selected: <strong style={{ letterSpacing: 0.5 }}>{selectedSerial}</strong> (will be knocked out upon issue)
+                      </>
                     ) : (
-                      "⚠️ Please click any serial number above to select it."
+                      "⚠️ Click any serial number above to select it."
                     )}
                   </Typography>
                   {selectedSerial && (
@@ -422,7 +535,7 @@ const SerialsRegistry = () => {
                       size="small"
                       color="inherit"
                       onClick={() => setSelectedSerial("")}
-                      sx={{ textTransform: "none", fontSize: "0.75rem", color: "#EF4444", fontWeight: 600 }}
+                      sx={{ textTransform: "none", fontSize: "0.7rem", py: 0, color: "#EF4444", fontWeight: 600 }}
                     >
                       Clear Selection
                     </Button>
@@ -431,69 +544,78 @@ const SerialsRegistry = () => {
               </Box>
             )}
 
-            {/* Step 3: Recipient Form */}
+            {/* Step 3: Recipient Form - Compact Side-by-side layout */}
             <form onSubmit={formik.handleSubmit}>
-              <Stack spacing={3}>
-                <Typography variant="subtitle2" fontWeight={700} color="#334155">
-                  3. RECIPIENT PHONE NUMBER
-                </Typography>
+              <Typography
+                variant="caption"
+                fontWeight={700}
+                color="#475569"
+                letterSpacing={0.5}
+                sx={{ display: "block", mb: 1 }}
+              >
+                3. RECIPIENT PHONE NUMBER & ISSUANCE
+              </Typography>
 
-                <TextField
-                  fullWidth
-                  id="phoneNumber"
-                  name="phoneNumber"
-                  label="Recipient Phone Number"
-                  placeholder="e.g. 0712345678 or 254712345678"
-                  value={formik.values.phoneNumber}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={Boolean(formik.touched.phoneNumber && formik.errors.phoneNumber)}
-                  helperText={
-                    (formik.touched.phoneNumber && formik.errors.phoneNumber) ||
-                    "Enter Kenyan mobile number (07XX / 01XX / 254...)"
-                  }
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <FaPhoneAlt color="#107C41" />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
+              <Grid container spacing={1.5} alignItems="flex-start">
+                <Grid item xs={12} sm={7} md={8}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    label="Recipient Phone Number"
+                    placeholder="e.g. 0712345678 or 254712345678"
+                    value={formik.values.phoneNumber}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={Boolean(formik.touched.phoneNumber && formik.errors.phoneNumber)}
+                    helperText={
+                      (formik.touched.phoneNumber && formik.errors.phoneNumber) ||
+                      "Enter Kenyan mobile number (07XX / 01XX / 254...)"
+                    }
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <FaPhoneAlt color="#107C41" size={14} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: 2,
+                        "&.Mui-focused fieldset": { borderColor: "#107C41" },
+                      },
+                    }}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={5} md={4}>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    fullWidth
+                    disabled={loading || !selectedSerial || displayedSerials.length === 0}
+                    startIcon={loading ? <CircularProgress size={18} color="inherit" /> : <FaSimCard />}
+                    sx={{
+                      bgcolor: "#107C41",
+                      fontWeight: 700,
+                      fontSize: "0.95rem",
+                      py: 1.05,
                       borderRadius: 2,
-                      "&.Mui-focused fieldset": { borderColor: "#107C41" },
-                    },
-                  }}
-                />
-
-                <Button
-                  type="submit"
-                  variant="contained"
-                  size="large"
-                  disabled={loading || !selectedSerial || availableSerials.length === 0}
-                  startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <FaSimCard />}
-                  sx={{
-                    bgcolor: "#107C41",
-                    fontWeight: 700,
-                    fontSize: "1.05rem",
-                    py: 1.6,
-                    borderRadius: 2,
-                    textTransform: "none",
-                    boxShadow: "0 4px 14px rgba(16, 124, 65, 0.4)",
-                    "&:hover": { bgcolor: "#0B532B" },
-                    "&.Mui-disabled": { bgcolor: "#CBD5E1", color: "#64748B" },
-                  }}
-                >
-                  {loading
-                    ? "Issuing Airtime..."
-                    : availableSerials.length === 0
-                    ? "No Serials in Stock"
-                    : !selectedSerial
-                    ? "Select a Serial Number Above"
-                    : `Issue Serial (${selectedSerial})`}
-                </Button>
-              </Stack>
+                      textTransform: "none",
+                      boxShadow: "0 2px 8px rgba(16, 124, 65, 0.3)",
+                      "&:hover": { bgcolor: "#0B532B" },
+                      "&.Mui-disabled": { bgcolor: "#CBD5E1", color: "#64748B" },
+                    }}
+                  >
+                    {loading
+                      ? "Issuing Airtime..."
+                      : !selectedSerial
+                        ? "Pick a Serial to Issue"
+                        : `Issue Serial`}
+                  </Button>
+                </Grid>
+              </Grid>
             </form>
           </CardContent>
         </Card>
