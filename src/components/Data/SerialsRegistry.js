@@ -444,7 +444,7 @@ const SerialsRegistry = () => {
                 </Tooltip>
               </Stack>
 
-              {initialLoading || denominations.length === 0 ? (
+              {initialLoading ? (
                 <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap sx={{ py: 0.5 }}>
                   {[1, 2, 3, 4].map((item) => (
                     <Skeleton
@@ -457,6 +457,41 @@ const SerialsRegistry = () => {
                   ))}
                   <CircularProgress size={18} sx={{ color: "#107C41" }} />
                 </Stack>
+              ) : denominations.length === 0 ? (
+                <Alert
+                  severity="warning"
+                  sx={{
+                    borderRadius: 2,
+                    border: "1px solid #FED7AA",
+                    bgcolor: "#FFF7ED",
+                    "& .MuiAlert-message": { width: "100%" },
+                  }}
+                >
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+                    <Box>
+                      <Typography variant="body2" fontWeight={700} color="#9A3412">
+                        No serials in database
+                      </Typography>
+                      <Typography variant="caption" color="#C2410C">
+                        There are currently no airtime serials available in the database. Please upload serial batches.
+                      </Typography>
+                    </Box>
+                    <Link href="/upload" passHref style={{ textDecoration: "none" }}>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        sx={{
+                          bgcolor: "#107C41",
+                          textTransform: "none",
+                          fontWeight: 600,
+                          "&:hover": { bgcolor: "#0B532B" },
+                        }}
+                      >
+                        Upload Serials
+                      </Button>
+                    </Link>
+                  </Box>
+                </Alert>
               ) : (
                 <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                   {denominations.map((denom) => {
@@ -491,7 +526,7 @@ const SerialsRegistry = () => {
             </Box>
 
             {/* Step 2: Available Serials Picker */}
-            {initialLoading || denominations.length === 0 ? (
+            {initialLoading ? (
               <Box
                 sx={{
                   mb: 2,
@@ -513,6 +548,24 @@ const SerialsRegistry = () => {
                     </Grid>
                   ))}
                 </Grid>
+              </Box>
+            ) : denominations.length === 0 ? (
+              <Box
+                sx={{
+                  mb: 2,
+                  p: 2.5,
+                  textAlign: "center",
+                  bgcolor: "#F8FAFC",
+                  borderRadius: 2,
+                  border: "1px dashed #CBD5E1",
+                }}
+              >
+                <Typography variant="body2" fontWeight={600} color="#64748B">
+                  No serial numbers available
+                </Typography>
+                <Typography variant="caption" color="#94A3B8">
+                  Available serial numbers will appear here once uploaded into the database.
+                </Typography>
               </Box>
             ) : currentDenomCount > 0 ? (
               <Box

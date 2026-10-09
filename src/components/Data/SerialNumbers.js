@@ -244,10 +244,12 @@ function SerialNumbers() {
                 <TableRow>
                   <TableCell colSpan={3} align="center" sx={{ py: 6 }}>
                     <Typography variant="body1" fontWeight={600} color="text.secondary">
-                      No serial stock found
+                      {denominations.length === 0 ? "No serials in database" : "No serial stock found matching search"}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      Upload serial batches to populate inventory.
+                      {denominations.length === 0
+                        ? "No serial stock found in the database. Upload serial batches to populate inventory."
+                        : "Try adjusting your search criteria."}
                     </Typography>
                   </TableCell>
                 </TableRow>

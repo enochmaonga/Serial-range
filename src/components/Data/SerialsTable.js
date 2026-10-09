@@ -85,16 +85,19 @@ const SerialsTable = () => {
 
       if (response.ok) {
         const responseData = await response.json();
-        if (Array.isArray(responseData)) {
-          const fetchedItems = responseData.map((item) => ({
-            id: item._id || uuidv4(),
-            serial: item.serial,
-            denomination: item.denomination,
-            phoneNumber: item.phoneNumber,
-            createdAt: item.createdAt,
-          }));
-          setData(fetchedItems);
-        }
+        const items = Array.isArray(responseData)
+          ? responseData
+          : Array.isArray(responseData?.data)
+          ? responseData.data
+          : [];
+        const fetchedItems = items.map((item) => ({
+          id: item._id || uuidv4(),
+          serial: item.serial || item.serialNumber,
+          denomination: item.denomination,
+          phoneNumber: item.phoneNumber,
+          createdAt: item.createdAt,
+        }));
+        setData(fetchedItems);
       } else {
         setError(`Failed to load data (${response.status})`);
       }
@@ -141,10 +144,17 @@ const SerialsTable = () => {
 
   const downloadCSV = () => {
     try {
-      const fields = ["denomination", "serial", "phoneNumber", "createdAt"];
+      const numberedData = filteredData.map((item, index) => ({
+        "#": index + 1,
+        "Denomination": item.denomination ? `Ksh ${item.denomination}` : "-",
+        "Serial Number": item.serial || "-",
+        "Phone Number": item.phoneNumber || "-",
+        "Date Issued": item.createdAt ? new Date(item.createdAt).toLocaleString() : "-",
+      }));
+      const fields = ["#", "Denomination", "Serial Number", "Phone Number", "Date Issued"];
       const opts = { fields };
       const parser = new Parser(opts);
-      const csv = parser.parse(filteredData);
+      const csv = parser.parse(numberedData);
 
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
@@ -216,7 +226,8 @@ const SerialsTable = () => {
         startY = 28;
       }
 
-      const tableData = filteredData.map((row) => [
+      const tableData = filteredData.map((row, index) => [
+        index + 1,
         row.denomination ? `Ksh ${row.denomination}` : "-",
         row.serial || "-",
         row.phoneNumber || "-",
@@ -224,11 +235,14 @@ const SerialsTable = () => {
       ]);
 
       autoTable(doc, {
-        head: [["Denomination", "Serial Number", "Phone Number", "Date Issued"]],
+        head: [["#", "Denomination", "Serial Number", "Phone Number", "Date Issued"]],
         body: tableData,
         startY: startY,
         headStyles: { fillColor: [16, 124, 65] },
         styles: { fontSize: 8 },
+        columnStyles: {
+          0: { cellWidth: 12, halign: "center" },
+        },
       });
 
       doc.save(
@@ -567,11 +581,11 @@ const SerialsTable = () => {
                 <TableRow>
                   <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
                     <Typography variant="body1" fontWeight={600} color="text.secondary">
-                      No serials found matching criteria
+                      {data.length === 0 ? "No serials in database" : "No serials found matching criteria"}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                       {data.length === 0
-                        ? "No serials have been issued yet. Use the Entry Form to issue airtime."
+                        ? "No serials or issued records found in database. Use the Entry Form to issue airtime."
                         : "Try adjusting your search or filters."}
                     </Typography>
                   </TableCell>
