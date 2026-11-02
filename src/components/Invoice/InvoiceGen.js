@@ -268,7 +268,7 @@ const ProformaInvoice = ({
         if (showToast) {
           setSnackbar({
             open: true,
-            message: `Invoice ${documentNo} saved to database for later printing!`,
+            message: `Invoice ${documentNo} saved to database`,
             severity: "success",
           });
         }
@@ -1065,7 +1065,7 @@ const ProformaInvoice = ({
                 py: 0.6,
               }}
             >
-              {saving ? "Saving..." : "Save for Later Printing"}
+              {saving ? "Saving..." : "Save"}
             </Button>
             <Button
               variant="contained"
