@@ -25,10 +25,12 @@ import {
   Divider,
   Container,
   InputAdornment,
+  Autocomplete,
 } from "@mui/material";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { SERVER_URL } from "@/config";
+import { getUser } from "@/utils/auth";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -63,6 +65,7 @@ const ProformaInvoice = ({
   const [loadingDocNo, setLoadingDocNo] = useState(false);
   const [date, setDate] = useState("");
   const [shop, setShop] = useState("Safaricom Shop Kisii");
+  const [salesPerson, setSalesPerson] = useState("");
   const [customer, setCustomer] = useState("");
   const [contactname, setContactName] = useState("");
   const [contactphone, setContactPhone] = useState("");
@@ -85,6 +88,25 @@ const ProformaInvoice = ({
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+
+  // Products Catalog for quick item selection
+  const [products, setProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+
+  const fetchProducts = useCallback(async () => {
+    setLoadingProducts(true);
+    try {
+      const res = await fetch(`${SERVER_URL}/products`);
+      if (res.ok) {
+        const data = await res.json();
+        setProducts(data.products || []);
+      }
+    } catch (err) {
+      console.error("Error fetching products:", err);
+    } finally {
+      setLoadingProducts(false);
+    }
+  }, []);
 
   // History Dialog States
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -116,7 +138,12 @@ const ProformaInvoice = ({
   useEffect(() => {
     setDate(new Date().toLocaleDateString("en-GB"));
     fetchNextDocNo();
-  }, [fetchNextDocNo]);
+    fetchProducts();
+    const currentUser = getUser();
+    if (currentUser && currentUser.username) {
+      setSalesPerson(currentUser.username);
+    }
+  }, [fetchNextDocNo, fetchProducts]);
 
   // Total calculation
   const total = items.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
@@ -216,6 +243,7 @@ const ProformaInvoice = ({
         documentNo: documentNo.trim(),
         date: date.trim(),
         shop: shop.trim(),
+        salesPerson: salesPerson.trim(),
         customer: customer.trim(),
         contactName: contactname.trim(),
         contactPhone: contactphone.trim(),
@@ -240,7 +268,7 @@ const ProformaInvoice = ({
         if (showToast) {
           setSnackbar({
             open: true,
-            message: `Invoice ${documentNo} saved successfully!`,
+            message: `Invoice ${documentNo} saved to database for later printing!`,
             severity: "success",
           });
         }
@@ -283,11 +311,34 @@ const ProformaInvoice = ({
     }
   };
 
+  // Start a fresh new invoice
+  const handleNewInvoice = async () => {
+    await fetchNextDocNo();
+    setDate(new Date().toLocaleDateString("en-GB"));
+    setCustomer("");
+    setContactName("");
+    setContactPhone("");
+    setItems([]);
+    setFormData({ id: null, description: "", quantity: "", unitPrice: "" });
+    setEditingItemId(null);
+    setSavedSuccess(false);
+    const currentUser = getUser();
+    if (currentUser && currentUser.username) {
+      setSalesPerson(currentUser.username);
+    }
+    setSnackbar({
+      open: true,
+      message: "Ready for new invoice.",
+      severity: "info",
+    });
+  };
+
   // Load a saved invoice from history into editor
-  const handleLoadInvoice = (inv) => {
+  const handleLoadInvoice = (inv, showToast = true) => {
     setDocumentNo(inv.documentNo || generateFallbackDocNo());
     setDate(inv.date || new Date().toLocaleDateString("en-GB"));
     setShop(inv.shop || "Safaricom Shop Kisii");
+    setSalesPerson(inv.salesPerson || "");
     setCustomer(inv.customer || "");
     setContactName(inv.contactName || "");
     setContactPhone(inv.contactPhone || "");
@@ -297,12 +348,72 @@ const ProformaInvoice = ({
     setBankDetails(inv.bankDetails || "");
     setItems(Array.isArray(inv.items) ? inv.items : []);
     setSavedSuccess(true);
-    setHistoryOpen(false);
-    setSnackbar({
-      open: true,
-      message: `Loaded invoice ${inv.documentNo}.`,
-      severity: "info",
-    });
+    if (showToast) {
+      setHistoryOpen(false);
+      setSnackbar({
+        open: true,
+        message: `Loaded invoice ${inv.documentNo}.`,
+        severity: "info",
+      });
+    }
+  };
+
+  // Generate and Open Invoice in PDF (opens in new tab)
+  const handleOpenPDF = async (targetInv = null) => {
+    const pdfWindow = typeof window !== "undefined" ? window.open("", "_blank") : null;
+    if (pdfWindow) {
+      pdfWindow.document.write(`
+        <html>
+          <head><title>Opening Invoice PDF...</title></head>
+          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f8fafc; color: #1e293b;">
+            <div style="text-align: center;">
+              <div style="width: 38px; height: 38px; border: 3px solid #e2e8f0; border-top-color: #107c41; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 14px;"></div>
+              <h3 style="margin: 0 0 6px; color: #0f172a; font-size: 16px;">Generating Invoice PDF</h3>
+              <p style="margin: 0; font-size: 13px; color: #64748b;">Please wait a moment...</p>
+            </div>
+            <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+          </body>
+        </html>
+      `);
+    }
+
+    try {
+      if (targetInv) {
+        handleLoadInvoice(targetInv, false);
+        // Short pause to allow React to render targetInv into invoiceRef.current
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      } else {
+        await saveInvoiceToDB(false);
+      }
+
+      if (!invoiceRef.current) {
+        throw new Error("Invoice preview not available");
+      }
+
+      const canvas = await html2canvas(invoiceRef.current, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+
+      const pdfBlob = pdf.output("blob");
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      const docTitle = (targetInv ? targetInv.documentNo : documentNo) || "Proforma_Invoice";
+
+      if (pdfWindow) {
+        pdfWindow.location.href = blobUrl;
+      } else {
+        pdf.save(`${docTitle}.pdf`);
+      }
+    } catch (err) {
+      console.error("Error generating PDF:", err);
+      if (pdfWindow) pdfWindow.close();
+      setSnackbar({ open: true, message: "Error generating PDF file.", severity: "error" });
+    }
   };
 
   // PDF Download (Auto-saves to DB first)
@@ -337,11 +448,59 @@ const ProformaInvoice = ({
           <head>
             <title>Proforma Invoice - ${documentNo}</title>
             <style>
-              body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 15px; color: #1E293B; }
-              @media print { body { padding: 0; } }
+              @page {
+                size: A4 portrait;
+                margin: 8mm 10mm;
+              }
+              html, body {
+                height: 100%;
+                margin: 0;
+                padding: 0;
+              }
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                color: #1E293B;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .invoice-print-container {
+                min-height: calc(297mm - 16mm);
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+              }
+              .invoice-body-content {
+                flex: 1 0 auto;
+              }
+              .invoice-page-footer {
+                margin-top: auto !important;
+                page-break-inside: avoid;
+                width: 100%;
+              }
+              @media print {
+                html, body {
+                  height: 100%;
+                }
+                body {
+                  padding: 0;
+                }
+                .invoice-print-container {
+                  min-height: calc(297mm - 16mm);
+                  height: calc(297mm - 16mm);
+                  display: flex;
+                  flex-direction: column;
+                  justify-content: space-between;
+                }
+                .invoice-page-footer {
+                  margin-top: auto !important;
+                }
+              }
             </style>
           </head>
-          <body>${invoiceRef.current.innerHTML}</body>
+          <body>
+            <div class="invoice-print-container">${invoiceRef.current.innerHTML}</div>
+          </body>
         </html>
       `);
       printWindow.document.close();
@@ -394,6 +553,15 @@ const ProformaInvoice = ({
                 Home
               </Button>
             </Link>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<FaPlus size={11} />}
+              onClick={handleNewInvoice}
+              sx={{ bgcolor: "#107C41", "&:hover": { bgcolor: "#0B532B" }, textTransform: "none", fontWeight: 700, py: 0.4, fontSize: "0.8rem" }}
+            >
+              New Invoice
+            </Button>
             <Button
               variant="outlined"
               size="small"
@@ -543,9 +711,9 @@ const ProformaInvoice = ({
               />
             </Grid>
 
-            {/* ROW 2: Customer, Contact Phone, Contact Person */}
+            {/* ROW 2: Customer, Contact Person, Contact Phone, Sales Person */}
             {/* Customer Name */}
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <TextField
                 label="Customer / Company *"
                 fullWidth
@@ -560,8 +728,23 @@ const ProformaInvoice = ({
               />
             </Grid>
 
+            {/* Contact Person Name */}
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField
+                label="Contact Person"
+                fullWidth
+                size="small"
+                value={contactname}
+                onChange={(e) => {
+                  setContactName(e.target.value);
+                  setSavedSuccess(false);
+                }}
+                placeholder="e.g. John Doe"
+              />
+            </Grid>
+
             {/* Contact Phone */}
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={3}>
               <TextField
                 label="Contact Phone"
                 fullWidth
@@ -575,18 +758,18 @@ const ProformaInvoice = ({
               />
             </Grid>
 
-            {/* Contact Person Name */}
-            <Grid item xs={12} sm={12} md={4}>
+            {/* Sales Person */}
+            <Grid item xs={12} sm={6} md={3}>
               <TextField
-                label="Contact Person"
+                label="(Sales Person)"
                 fullWidth
                 size="small"
-                value={contactname}
+                value={salesPerson}
                 onChange={(e) => {
-                  setContactName(e.target.value);
+                  setSalesPerson(e.target.value);
                   setSavedSuccess(false);
                 }}
-                placeholder="e.g. John Doe"
+                placeholder="e.g. Sales Executive Name"
               />
             </Grid>
           </Grid>
@@ -641,13 +824,110 @@ const ProformaInvoice = ({
 
             <Grid container spacing={1} alignItems="center">
               <Grid item xs={12} md={6}>
-                <TextField
-                  label="Description"
-                  fullWidth
+                <Autocomplete
+                  freeSolo
+                  clearOnBlur={false}
+                  autoSelect={false}
                   size="small"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="e.g. Safaricom Airtime Scratch Cards Ksh 1000"
+                  options={products}
+                  loading={loadingProducts}
+                  getOptionLabel={(option) => {
+                    if (typeof option === "string") return option;
+                    return option?.description || "";
+                  }}
+                  value={formData.description || ""}
+                  inputValue={formData.description || ""}
+                  onInputChange={(event, newInputValue) => {
+                    setFormData((prev) => ({ ...prev, description: newInputValue }));
+                  }}
+                  onChange={(event, newValue) => {
+                    if (!newValue) {
+                      setFormData((prev) => ({ ...prev, description: "" }));
+                      return;
+                    }
+                    if (typeof newValue === "string") {
+                      setFormData((prev) => ({ ...prev, description: newValue }));
+                    } else if (newValue.description) {
+                      // Selected product from catalog
+                      setFormData((prev) => ({
+                        ...prev,
+                        description: newValue.description,
+                        unitPrice: newValue.unitPrice !== undefined ? String(newValue.unitPrice) : prev.unitPrice,
+                        quantity: prev.quantity ? prev.quantity : "1",
+                      }));
+                    }
+                  }}
+                  filterOptions={(options, state) => {
+                    const query = (state.inputValue || "").toLowerCase().trim();
+                    if (!query) return options;
+                    return options.filter(
+                      (opt) =>
+                        (opt.description && opt.description.toLowerCase().includes(query)) ||
+                        (opt.itemCode && opt.itemCode.toLowerCase().includes(query))
+                    );
+                  }}
+                  renderOption={(props, option) => (
+                    <Box
+                      component="li"
+                      {...props}
+                      key={option._id || option.itemCode || option.description}
+                      sx={{
+                        display: "flex !important",
+                        justifyContent: "space-between !important",
+                        alignItems: "center",
+                        py: 0.8,
+                        px: 1.2,
+                        gap: 1,
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 0, overflow: "hidden" }}>
+                        {option.itemCode && (
+                          <Chip
+                            label={option.itemCode}
+                            size="small"
+                            sx={{
+                              mr: 1,
+                              fontSize: "0.68rem",
+                              height: 20,
+                              bgcolor: "#F1F5F9",
+                              fontWeight: 700,
+                              color: "#0F172A",
+                              flexShrink: 0,
+                            }}
+                          />
+                        )}
+                        <Typography variant="body2" sx={{ fontWeight: 600, fontSize: "0.82rem" }} noWrap>
+                          {option.description}
+                        </Typography>
+                      </Box>
+                      <Typography
+                        variant="caption"
+                        fontWeight={800}
+                        color="#107C41"
+                        sx={{ ml: 1, flexShrink: 0, fontSize: "0.78rem" }}
+                      >
+                        KES {Number(option.unitPrice || 0).toLocaleString()}
+                      </Typography>
+                    </Box>
+                  )}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Product Description"
+                      placeholder="Type any custom item or pick from catalog..."
+                      fullWidth
+                      size="small"
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {loadingProducts ? <CircularProgress color="inherit" size={16} /> : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
                 />
               </Grid>
 
@@ -785,7 +1065,7 @@ const ProformaInvoice = ({
                 py: 0.6,
               }}
             >
-              {saving ? "Saving..." : "Save"}
+              {saving ? "Saving..." : "Save for Later Printing"}
             </Button>
             <Button
               variant="contained"
@@ -806,18 +1086,23 @@ const ProformaInvoice = ({
             <Button
               variant="outlined"
               size="small"
-              onClick={handlePrint}
-              startIcon={<FaPrint size={13} />}
+              onClick={handleNewInvoice}
+              startIcon={<HiArrowPath size={14} />}
               sx={{
-                color: "#475569",
+                color: "#64748B",
                 borderColor: "#CBD5E1",
                 textTransform: "none",
                 fontWeight: 700,
                 px: 2,
                 py: 0.6,
+                "&:hover": {
+                  borderColor: "#EF4444",
+                  bgcolor: "#FEF2F2",
+                  color: "#DC2626",
+                },
               }}
             >
-              Print
+              Cancel / Refresh
             </Button>
           </Stack>
         </Paper>
@@ -830,18 +1115,22 @@ const ProformaInvoice = ({
         <Paper
           ref={invoiceRef}
           elevation={1}
+          className="invoice-page-paper"
           sx={{
             p: { xs: 2.5, md: 3.5 },
-            maxWidth: 740,
+            maxWidth: { xs: "100%", sm: 880, md: 950 },
+            width: "100%",
             margin: "auto",
             position: "relative",
-            minHeight: "720px",
+            minHeight: "1350px",
+            boxSizing: "border-box",
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
             bgcolor: "#FFFFFF",
             borderRadius: 1.5,
             border: "1px solid #E2E8F0",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.05)",
           }}
         >
           {/* Subtle Watermark */}
@@ -849,9 +1138,9 @@ const ProformaInvoice = ({
             sx={{
               position: "absolute",
               top: "40%",
-              left: "18%",
+              left: "26%",
               transform: "rotate(-30deg)",
-              fontSize: "1.5rem",
+              fontSize: "1.8rem",
               fontWeight: 900,
               color: "rgba(16, 124, 65, 0.04)",
               userSelect: "none",
@@ -861,7 +1150,7 @@ const ProformaInvoice = ({
             PROFORMA INVOICE
           </Typography>
 
-          <Box>
+          <Box className="invoice-body-content" sx={{ flex: "1 0 auto", display: "flex", flexDirection: "column" }}>
             {/* Invoice Top Header with Safaricom Logo and Document Header */}
             <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
               <Box>
@@ -986,140 +1275,140 @@ const ProformaInvoice = ({
                 </TableRow>
               </TableBody>
             </Table>
+          </Box>
 
-            {/* Note & Terms Section Below Table */}
+          {/* Page Footer Container - Prints as page footer whether page has content or not */}
+          <Box
+            className="invoice-page-footer"
+            sx={{
+              mt: "auto",
+              pt: 1.5,
+              width: "100%",
+              display: "flex",
+              flexDirection: "column",
+              gap: 0.8,
+            }}
+          >
+            {/* Note & Bank Details - Compact 2-Row Section */}
             <Box
               sx={{
-                mt: 1.5,
-                mb: 2,
-                p: 1.5,
+                p: 0.8,
                 bgcolor: "#F8FAFC",
-                borderRadius: 1.5,
+                borderRadius: 1.2,
                 border: "1px solid #E2E8F0",
+                display: "flex",
+                flexDirection: "column",
+                gap: 0.5,
               }}
             >
-              <Typography
-                variant="caption"
-                fontWeight={800}
-                color="#0F172A"
-                sx={{ display: "block", mb: 0.3, fontSize: "0.75rem" }}
-              >
-                Note:
-              </Typography>
-              <Typography variant="caption" display="block" color="#334155" sx={{ fontSize: "0.72rem", lineHeight: 1.45 }}>
-                Terms &amp; Conditions Apply
-              </Typography>
-              <Typography variant="caption" display="block" color="#334155" sx={{ fontSize: "0.72rem", lineHeight: 1.45 }}>
-                Prices are subject to change any time, kindly confirm the prices before payment.
-              </Typography>
-              <Typography variant="caption" display="block" color="#334155" sx={{ fontSize: "0.72rem", lineHeight: 1.45 }}>
-                Safaricom Shops sell original devices directly from manufacturers.
-              </Typography>
-              <Typography variant="caption" display="block" color="#334155" sx={{ fontSize: "0.72rem", lineHeight: 1.45 }}>
-                All our devices come with Manufacturer’s Warranty of 1 Year.
-              </Typography>
-              <Typography variant="caption" display="block" color="#334155" sx={{ fontSize: "0.72rem", lineHeight: 1.45, mt: 0.8 }}>
-                Payment terms include EFT, Cash and Cheques (Cheques have to clear before stock is released).
-              </Typography>
-
-              {/* Structured Bank Account Details */}
-              <Box sx={{ mt: 1, pt: 0.8, borderTop: "1px dashed #CBD5E1" }}>
+              {/* Row 1: Note */}
+              <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: 0.5 }}>
                 <Typography
                   variant="caption"
                   fontWeight={800}
                   color="#0F172A"
-                  sx={{ display: "block", mb: 0.5, fontSize: "0.74rem" }}
+                  sx={{ fontSize: "0.68rem", whiteSpace: "nowrap" }}
+                >
+                  Note:
+                </Typography>
+                <Typography variant="caption" color="#475569" sx={{ fontSize: "0.66rem", lineHeight: 1.3 }}>
+                  Terms &amp; Conditions Apply • Prices subject to change without notice; kindly confirm prices before payment • Original devices with 1 Year Manufacturer’s Warranty • Payment via EFT, Cash or Cheques (cheques must clear before goods release).
+                </Typography>
+              </Box>
+
+              <Divider sx={{ borderColor: "#CBD5E1", borderStyle: "dashed", my: 0.1 }} />
+
+              {/* Row 2: Bank Account Details */}
+              <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: { xs: 0.5, sm: 1.2 } }}>
+                <Typography
+                  variant="caption"
+                  fontWeight={800}
+                  color="#0F172A"
+                  sx={{ fontSize: "0.68rem", whiteSpace: "nowrap" }}
                 >
                   Bank Account Details:
                 </Typography>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.2, mt: 0.3 }}>
-                  <Typography variant="caption" sx={{ fontSize: "0.72rem", color: "#334155", lineHeight: 1.45 }}>
-                    Account Name:{" "}
-                    <Typography component="span" variant="caption" fontWeight={700} color="#0F172A" sx={{ fontSize: "0.72rem" }}>
-                      Safaricom PLC
-                    </Typography>
+                <Typography variant="caption" sx={{ fontSize: "0.66rem", color: "#475569" }}>
+                  Bank: <strong style={{ color: "#0F172A" }}>Standard Chartered (Westlands)</strong>
+                </Typography>
+                <Typography variant="caption" sx={{ fontSize: "0.66rem", color: "#475569" }}>
+                  A/C Name: <strong style={{ color: "#0F172A" }}>Safaricom PLC</strong>
+                </Typography>
+                <Typography variant="caption" sx={{ fontSize: "0.66rem", color: "#475569" }}>
+                  A/C No:{" "}
+                  <Typography
+                    component="span"
+                    variant="caption"
+                    fontWeight={800}
+                    color="#107C41"
+                    sx={{ fontSize: "0.69rem", fontFamily: "monospace" }}
+                  >
+                    0106094643702
                   </Typography>
-                  <Typography variant="caption" sx={{ fontSize: "0.72rem", color: "#334155", lineHeight: 1.45 }}>
-                    Bank:{" "}
-                    <Typography component="span" variant="caption" fontWeight={700} color="#0F172A" sx={{ fontSize: "0.72rem" }}>
-                      Standard Chartered Bank Kenya Limited
-                    </Typography>
+                </Typography>
+                <Typography variant="caption" sx={{ fontSize: "0.66rem", color: "#475569" }}>
+                  Bank/Branch Code: <strong style={{ color: "#0F172A" }}>02/070</strong>
+                </Typography>
+                <Typography variant="caption" sx={{ fontSize: "0.66rem", color: "#475569" }}>
+                  S/Code:{" "}
+                  <Typography
+                    component="span"
+                    variant="caption"
+                    fontWeight={700}
+                    color="#0F172A"
+                    sx={{ fontSize: "0.69rem", fontFamily: "monospace" }}
+                  >
+                    SCBLKENXXXX
                   </Typography>
-                  <Typography variant="caption" sx={{ fontSize: "0.72rem", color: "#334155", lineHeight: 1.45 }}>
-                    Branch:{" "}
-                    <Typography component="span" variant="caption" fontWeight={700} color="#0F172A" sx={{ fontSize: "0.72rem" }}>
-                      Westlands
-                    </Typography>
-                  </Typography>
-                  <Typography variant="caption" sx={{ fontSize: "0.72rem", color: "#334155", lineHeight: 1.45 }}>
-                    Bank Code:{" "}
-                    <Typography component="span" variant="caption" fontWeight={700} color="#0F172A" sx={{ fontSize: "0.72rem" }}>
-                      02
-                    </Typography>
-                  </Typography>
-                  <Typography variant="caption" sx={{ fontSize: "0.72rem", color: "#334155", lineHeight: 1.45 }}>
-                    Branch Code:{" "}
-                    <Typography component="span" variant="caption" fontWeight={700} color="#0F172A" sx={{ fontSize: "0.72rem" }}>
-                      070
-                    </Typography>
-                  </Typography>
-                  <Typography variant="caption" sx={{ fontSize: "0.72rem", color: "#334155", lineHeight: 1.45 }}>
-                    Account No:{" "}
-                    <Typography component="span" variant="caption" fontWeight={800} color="#107C41" sx={{ fontSize: "0.72rem", fontFamily: "monospace", letterSpacing: 0.5 }}>
-                      0106094643702
-                    </Typography>
-                  </Typography>
-                  <Typography variant="caption" sx={{ fontSize: "0.72rem", color: "#334155", lineHeight: 1.45 }}>
-                    S/Code:{" "}
-                    <Typography component="span" variant="caption" fontWeight={700} color="#0F172A" sx={{ fontSize: "0.72rem", fontFamily: "monospace" }}>
-                      SCBLKENXXXX
-                    </Typography>
-                  </Typography>
-                  <Typography variant="caption" sx={{ fontSize: "0.72rem", color: "#334155", lineHeight: 1.45 }}>
-                    Currency:{" "}
-                    <Typography component="span" variant="caption" fontWeight={700} color="#0F172A" sx={{ fontSize: "0.72rem" }}>
-                      Kes
-                    </Typography>
-                  </Typography>
-                </Box>
+                </Typography>
+                <Typography variant="caption" sx={{ fontSize: "0.66rem", color: "#475569" }}>
+                  Currency: <strong style={{ color: "#0F172A" }}>Kes</strong>
+                </Typography>
               </Box>
             </Box>
 
             {/* Stamp & Authorized Signature */}
-            <Box sx={{ mt: 3, pt: 1.5, display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}>
+            <Box sx={{ pt: 0.5, display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 1 }}>
               <Box>
-                <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                  Authorized Stamp & Signature:
+                <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ fontSize: "0.66rem" }}>
+                  Authorized Stamp &amp; Signature:
                 </Typography>
                 <Box
                   sx={{
-                    mt: 0.5,
-                    width: 200,
-                    height: 40,
+                    mt: 0.2,
+                    width: 160,
+                    height: 22,
                     borderBottom: "1.5px dashed #94A3B8",
                   }}
                 />
               </Box>
 
               <Box sx={{ textAlign: { xs: "left", sm: "right" } }}>
-                <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" sx={{ fontSize: "0.66rem", lineHeight: 1.1 }}>
                   Issued By:
                 </Typography>
-                <Typography variant="body2" fontWeight={700}>
-                  {shop || "Safaricom PLC"}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Date: {date}
+                {salesPerson ? (
+                  <Typography variant="caption" fontWeight={700} color="#0F172A" display="block" sx={{ fontSize: "0.72rem", lineHeight: 1.2 }}>
+                    {salesPerson}
+                  </Typography>
+                ) : null}
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  display="block"
+                  sx={{ fontSize: "0.65rem", lineHeight: 1.2 }}
+                >
+                  {shop || "Safaricom Shop Kisii"} &bull; Date: {date}
                 </Typography>
               </Box>
             </Box>
-          </Box>
 
-          {/* Compact Document Footer */}
-          <Box sx={{ borderTop: "1px solid #E2E8F0", pt: 1.5, mt: 2.5 }}>
-            <Typography variant="caption" align="center" display="block" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
-              {companyContact}
-            </Typography>
+            {/* Compact Document Footer */}
+            <Box sx={{ borderTop: "1px solid #E2E8F0", pt: 0.8, mt: 0.5 }}>
+              <Typography variant="caption" align="center" display="block" color="text.secondary" sx={{ fontSize: "0.65rem", lineHeight: 1.2 }}>
+                {companyContact}
+              </Typography>
+            </Box>
           </Box>
         </Paper>
 
@@ -1146,6 +1435,7 @@ const ProformaInvoice = ({
                   <TableRow>
                     <TableCell sx={{ fontWeight: 700 }}>Doc Number</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Customer</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Sales Person</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Shop</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
                     <TableCell sx={{ fontWeight: 700 }} align="right">Total</TableCell>
@@ -1157,20 +1447,47 @@ const ProformaInvoice = ({
                     <TableRow key={inv._id || inv.documentNo} hover>
                       <TableCell sx={{ fontWeight: 700, color: "#107C41" }}>{inv.documentNo}</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>{inv.customer}</TableCell>
+                      <TableCell>{inv.salesPerson || "-"}</TableCell>
                       <TableCell>{inv.shop}</TableCell>
                       <TableCell>{inv.date}</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 700 }}>
                         {formatCurrency(inv.total)}
                       </TableCell>
                       <TableCell align="center">
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => handleLoadInvoice(inv)}
-                          sx={{ textTransform: "none", fontSize: "0.75rem", py: 0.2 }}
-                        >
-                          Load
-                        </Button>
+                        <Stack direction="row" spacing={0.6} justifyContent="center">
+                          <Button
+                            size="small"
+                            variant="contained"
+                            onClick={() => handleOpenPDF(inv)}
+                            startIcon={<FaFilePdf size={11} />}
+                            sx={{
+                              bgcolor: "#0369A1",
+                              "&:hover": { bgcolor: "#075985" },
+                              textTransform: "none",
+                              fontSize: "0.73rem",
+                              py: 0.25,
+                              px: 0.9,
+                              fontWeight: 700,
+                            }}
+                          >
+                            Open
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => handleLoadInvoice(inv, true)}
+                            sx={{
+                              textTransform: "none",
+                              fontSize: "0.73rem",
+                              py: 0.25,
+                              px: 0.9,
+                              borderColor: "#CBD5E1",
+                              color: "#334155",
+                            }}
+                          >
+                            Load
+                          </Button>
+                        </Stack>
                       </TableCell>
                     </TableRow>
                   ))}

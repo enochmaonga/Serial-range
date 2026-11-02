@@ -87,16 +87,6 @@ export default function Home() {
           direction={isMobile ? "column" : "row"}
           sx={{ width: isMobile ? "100%" : "auto" }}
         >
-          <NextLink href="/useSerials" passHref>
-            <ActionButton
-              variant="contained"
-              size={isMobile ? "medium" : "large"}
-              sx={{ bgcolor: "#107C41", "&:hover": { bgcolor: "#0B532B" }, color: "#FFFFFF" }}
-              fullWidth={isMobile}
-            >
-              Issue Airtime
-            </ActionButton>
-          </NextLink>
 
           <NextLink href="/invoice-generator" passHref>
             <ActionButton
@@ -108,6 +98,18 @@ export default function Home() {
               Proforma Invoice
             </ActionButton>
           </NextLink>
+          <NextLink href="/useSerials" passHref>
+            <ActionButton
+              variant="contained"
+              size={isMobile ? "medium" : "large"}
+              sx={{ bgcolor: "#107C41", "&:hover": { bgcolor: "#0B532B" }, color: "#FFFFFF" }}
+              fullWidth={isMobile}
+            >
+              Issue Airtime
+            </ActionButton>
+          </NextLink>
+
+
 
           <NextLink href="/login" passHref>
             <ActionButton

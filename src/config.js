@@ -1,6 +1,6 @@
 const SERVER_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
-  "http://localhost:5005";
+  "http://localhost:5006";
 
 export { SERVER_URL };
