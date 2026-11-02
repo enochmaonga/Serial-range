@@ -871,26 +871,9 @@ const ProformaInvoice = ({
                         gap: 1,
                       }}
                     >
-                      <Box sx={{ display: "flex", alignItems: "center", minWidth: 0, overflow: "hidden" }}>
-                        {option.itemCode && (
-                          <Chip
-                            label={option.itemCode}
-                            size="small"
-                            sx={{
-                              mr: 1,
-                              fontSize: "0.68rem",
-                              height: 20,
-                              bgcolor: "#F1F5F9",
-                              fontWeight: 700,
-                              color: "#0F172A",
-                              flexShrink: 0,
-                            }}
-                          />
-                        )}
-                        <Typography variant="body2" sx={{ fontWeight: 600, fontSize: "0.82rem" }} noWrap>
-                          {option.description}
-                        </Typography>
-                      </Box>
+                      <Typography variant="body2" sx={{ fontWeight: 600, fontSize: "0.84rem", minWidth: 0 }} noWrap>
+                        {option.description}
+                      </Typography>
                       <Typography
                         variant="caption"
                         fontWeight={800}
