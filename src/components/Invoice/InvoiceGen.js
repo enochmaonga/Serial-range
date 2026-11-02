@@ -554,15 +554,6 @@ const ProformaInvoice = ({
               </Button>
             </Link>
             <Button
-              variant="contained"
-              size="small"
-              startIcon={<FaPlus size={11} />}
-              onClick={handleNewInvoice}
-              sx={{ bgcolor: "#107C41", "&:hover": { bgcolor: "#0B532B" }, textTransform: "none", fontWeight: 700, py: 0.4, fontSize: "0.8rem" }}
-            >
-              New Invoice
-            </Button>
-            <Button
               variant="outlined"
               size="small"
               startIcon={<FaHistory size={13} />}
